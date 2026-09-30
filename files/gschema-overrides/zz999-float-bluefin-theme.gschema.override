@@ -1,0 +1,12 @@
+# Default theme: ZorinBlue-Light (Bluefin / GNOME Shell 48+ ships Adwaita by
+# default). The full Zorin theme family lives in /usr/share/themes.
+#
+# `float-theme` switches these live; these are just the first-boot values.
+#
+# Note: GTK4 apps inside Flatpak cannot read /usr/share/themes from the host by
+# default, so the system-files module also drops a `flatpak override` granting
+# read access to it. That is what makes the theme reach Flatpak GTK4 apps.
+
+[org.gnome.desktop.interface]
+gtk-theme='ZorinBlue-Light'
+color-scheme='default'

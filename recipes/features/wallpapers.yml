@@ -20,5 +20,5 @@ modules:
       - install-system76-wallpaper.sh
       - install-framework-wallpaper.sh
       - install-kde-wallpapers.sh
-      - install-floating-woof.sh
       - install-floating-skies.sh
+      - install-lake-of-sound.sh

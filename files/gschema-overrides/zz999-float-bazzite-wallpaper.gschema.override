@@ -1,6 +1,8 @@
-# Default wallpaper: fox.jpg from the floating-skies collection
+# Default wallpaper for Bazzite (floatite): "Pixel Night of Sound" from the
+# Lake of Sound collection, paired with the dark ZorinBlue-Dark GTK theme.
+# Bluefin uses the day variant instead — see the bluefin override.
 
 [org.gnome.desktop.background]
-picture-uri='file:///usr/share/backgrounds/floating-skies/slawek-fedorczuk-slawek-fedorczuk-artstation-landscapeb.jpg'
-picture-uri-dark='file:///usr/share/backgrounds/floating-skies/slawek-fedorczuk-slawek-fedorczuk-artstation-landscapeb.jpg'
+picture-uri='file:///usr/share/backgrounds/Lake%20of%20Sound/Pixel%20Night%20of%20Sound.jpeg'
+picture-uri-dark='file:///usr/share/backgrounds/Lake%20of%20Sound/Pixel%20Night%20of%20Sound.jpeg'
 picture-options='zoom'

@@ -7,7 +7,8 @@ A set of [Bootable Container](https://containers.github.io/bootable/) images bui
 Modifications baked into the image:
 
 -   Firefox as the default browser (installed from RPM)
--   **Default wallpaper** — `fox.jpg` from the `floating-skies` collection on both Bluefin and Bazzite (available alongside `floating-woof` and the System76, Framework, Ubuntu, and KDE/Plasma collections in the GNOME wallpaper picker)
+-   **Zorin OS themes** — the full `ZorinBlue`/`Brown`/`Green`/`Grey`/`Orange`/`Purple`/`Red`/`Yellow` light+dark set in `/usr/share/themes`, defaulting to `ZorinBlue-Light` (Bluefin) and `ZorinBlue-Dark` (Bazzite). Switch any of them with `float-theme <name>`, or `float-theme` to list them. The theme reaches GNOME, native GTK4 apps (via a seeded `~/.config/gtk-4.0`) and GTK4 apps inside Flatpak
+-   **Default wallpaper** — `Pixel Lake of Sound.jpeg` from the `Lake of Sound` collection on Bluefin, and `Pixel Night of Sound.jpeg` on Bazzite (alongside the `Floating Skies`, System76, Framework, Ubuntu, and KDE/Plasma collections in the GNOME wallpaper picker). Change it with `float-theme --wallpaper <name>`
 -   [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html) set as the default interface font (the document font stays Adwaita Sans)
 -   Steam installed on the Bluefin images from negativo17 (Bazzite already ships it)
 -   Clocks set to AM/PM view with Weekday Display

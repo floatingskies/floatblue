@@ -4,6 +4,6 @@ set -eou pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# The floating-skies collection is installed at /usr/share/backgrounds/floating-skies
+# The Floating Skies collection is installed at /usr/share/backgrounds/Floating Skies
 # by the system files module. Register it with GNOME's wallpaper picker.
-"$SCRIPT_DIR/generate-gnome-wallpaper-xml.sh" /usr/share/backgrounds/floating-skies floating-skies "Floating Skies"
+"$SCRIPT_DIR/generate-gnome-wallpaper-xml.sh" "/usr/share/backgrounds/Floating Skies" floating-skies "Floating Skies"

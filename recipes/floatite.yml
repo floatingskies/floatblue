@@ -19,9 +19,10 @@ modules:
   - from-file: features/fonts.yml
   - from-file: features/gnome-ui-fixes.yml
   - from-file: features/wallpapers.yml
-  - type: gschema-overrides  # Float defaults: Intel One Mono interface font + fox.jpg wallpaper
+  - type: gschema-overrides  # Float defaults: Intel One Mono interface font, dark Zorin theme, night wallpaper
     include:
       - zz42-float.gschema.override
+      - zz999-float-bazzite-theme.gschema.override
       - zz999-float-bazzite-wallpaper.gschema.override
   - type: gnome-extensions
     install:

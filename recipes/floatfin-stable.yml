@@ -19,5 +19,6 @@ modules:
   - type: gschema-overrides  # Override Bluefin's overrides of Gnome default fonts
     include:
       - zz42-float.gschema.override
+      - zz999-float-bluefin-theme.gschema.override
       - zz999-float-bluefin-wallpaper.gschema.override
   - type: initramfs  # Regenerate initramfs so the plymouth spinner theme + pixmaps changes are baked in

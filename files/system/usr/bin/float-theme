@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+# float-theme — switch the Floatfin desktop theme and wallpaper from the terminal.
+#
+#   float-theme                  list installed themes (current one marked)
+#   float-theme <name>           apply a theme by name, e.g. ZorinBlue-Light
+#   float-theme <name> --dark    force dark colour scheme (default for *-Dark)
+#   float-theme <name> --light   force light colour scheme
+#   float-theme --wallpaper <f>  set the wallpaper (takes the rest of the line,
+#                                so quoting is optional)
+#   float-theme --reset          back to the image default for this flavour
+#
+# Applies to: GNOME Shell + gsettings apps, native GTK4 apps, and GTK4 apps
+# running inside Flatpak.
+
+set -euo pipefail
+
+THEMES_DIR=/usr/share/themes
+SCHEMA=org.gnome.desktop.interface
+
+# Flavour detection for --reset: set-os-release.sh brands the Bazzite image as
+# ID=floatite (Bluefin is floatfin), so key off /usr/lib/os-release.
+default_theme() {
+    if [[ -r /usr/lib/os-release ]] &&
+        grep -q '^ID=floatite' /usr/lib/os-release 2>/dev/null; then
+        printf 'ZorinBlue-Dark\n'
+    else
+        printf 'ZorinBlue-Light\n'
+    fi
+}
+
+usage() {
+    sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# Apply a Zorin metatheme by directory name.
+apply_theme() {
+    local name=$1 color_scheme=${2:-}
+
+    if [[ ! -d "$THEMES_DIR/$name" ]]; then
+        echo "error: no such theme: $name" >&2
+        echo "run 'float-theme' to list the installed ones" >&2
+        exit 1
+    fi
+
+    # Every Zorin theme ships a matching *-Dark variant; pick the colour
+    # scheme from the name unless the caller forced one.
+    if [[ -z "$color_scheme" ]]; then
+        if [[ $name == *-Dark ]]; then
+            color_scheme=prefer-dark
+        else
+            color_scheme=default
+        fi
+    fi
+
+    if have gsettings; then
+        gsettings set "$SCHEMA" gtk-theme "$name"
+        gsettings set "$SCHEMA" color-scheme "$color_scheme"
+    else
+        echo "warning: gsettings unavailable, skipping GNOME/GTK settings" >&2
+    fi
+
+    # Native (non-Flatpak) GTK4 apps resolve themes through XDG_DATA_DIRS, but
+    # a user-level copy is what GTK4 actually reads first for a lot of apps.
+    # Copy the theme's gtk-4.0 into ~/.config/gtk-4.0 so the choice sticks
+    # without root.
+    local src="$THEMES_DIR/$name/gtk-4.0"
+    if [[ -d $src ]]; then
+        local dst="${XDG_CONFIG_HOME:-$HOME/.config}/gtk-4.0"
+        mkdir -p "$dst"
+        # Clear only what the previous theme put there — settings.ini holds
+        # the user's own GTK preferences and must survive a theme switch.
+        rm -rf "${dst:?}/assets" "${dst:?}/gtk.css" "${dst:?}/gtk-dark.css"
+        cp -a "$src/." "$dst/"
+    fi
+
+    # Flatpak apps run in a sandbox with no access to the host theme dir, so
+    # the system image pre-grants it system-wide; apply the user override too
+    # (and pass GTK_THEME) so a theme switch takes effect for sandboxed GTK4
+    # apps without root.
+    if have flatpak; then
+        flatpak override --user \
+            --filesystem="$THEMES_DIR:ro" \
+            --filesystem=/usr/share/backgrounds:ro \
+            --env=GTK_THEME="$name" >/dev/null 2>&1 || true
+    fi
+
+    echo "Theme set to ${name} (${color_scheme})"
+}
+
+set_wallpaper() {
+    local wanted=$1 path
+
+    # Accept a bare filename (looked up under /usr/share/backgrounds, so
+    # "Pixel Night of Sound" finds the Lake of Sound collection) or an
+    # absolute path to any image.
+    if [[ $wanted == /* ]]; then
+        path=$wanted
+    else
+        path=$(find /usr/share/backgrounds -type f -iname "$wanted*" -print -quit 2>/dev/null || true)
+    fi
+
+    if [[ -z $path || ! -f $path ]]; then
+        echo "error: wallpaper not found: $wanted" >&2
+        exit 1
+    fi
+
+    if have gsettings; then
+        # Percent-encode the spaces in the collection path ("Lake of Sound");
+        # GFile accepts them raw, but the settings UI string-matches the URI.
+        local uri
+        uri="file://$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' "$path" 2>/dev/null || printf 'file://%s' "$path")"
+        gsettings set org.gnome.desktop.background picture-uri "$uri"
+        gsettings set org.gnome.desktop.background picture-uri-dark "$uri"
+        gsettings set org.gnome.desktop.background picture-options zoom
+    fi
+    echo "Wallpaper set to ${path##*/}"
+}
+
+list_themes() {
+    local current
+    current=$(gsettings get "$SCHEMA" gtk-theme 2>/dev/null | tr -d "'" || true)
+
+    local dir name found=0
+    for dir in "$THEMES_DIR"/Zorin*; do
+        [[ -d $dir ]] || continue
+        found=1
+        name=${dir##*/}
+        if [[ $name == "$current" ]]; then
+            printf '  %s  (current)\n' "$name"
+        else
+            printf '  %s\n' "$name"
+        fi
+    done
+
+    if (( ! found )); then
+        echo "no Zorin themes found in $THEMES_DIR" >&2
+        exit 1
+    fi
+}
+
+args=()
+wallpaper=""
+next_is_wallpaper=0
+for a in "$@"; do
+    case $a in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        --reset)
+            args=(reset)
+            ;;
+        --wallpaper)
+            # Everything after --wallpaper is the wallpaper name, so
+            # `--wallpaper Pixel Lake of Sound` works without quoting.
+            next_is_wallpaper=1
+            ;;
+        --dark)
+            args+=(--scheme prefer-dark)
+            ;;
+        --light)
+            args+=(--scheme default)
+            ;;
+        *)
+            if ((next_is_wallpaper)); then
+                next_is_wallpaper=0
+                wallpaper=$a
+            elif [[ -n $wallpaper ]]; then
+                wallpaper+=" $a"
+            else
+                args+=("$a")
+            fi
+            ;;
+    esac
+done
+
+if [[ -n $wallpaper ]]; then
+    set_wallpaper "$wallpaper"
+fi
+
+if ((${#args[@]} == 0)); then
+    [[ -n $wallpaper ]] || list_themes
+    exit 0
+fi
+
+if [[ ${args[0]} == reset ]]; then
+    apply_theme "$(default_theme)"
+    exit 0
+fi
+
+name=${args[0]}
+scheme=""
+for ((i = 1; i < ${#args[@]}; i++)); do
+    if [[ ${args[i]} == --scheme && -n ${args[i + 1]:-} ]]; then
+        scheme=${args[i + 1]}
+        ((i++))
+    fi
+done
+
+apply_theme "$name" "$scheme"
