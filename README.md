@@ -21,7 +21,7 @@ Modifications baked into the image:
 -   Touchpad tap-to-click enabled
 -   Fedora/GDM logo pixmaps and the Plymouth spinner watermark swapped for our own, and the initramfs rebuilt so they show from first boot
 -   The OS identifies itself as *Floatfin* (Bluefin-based images) and *Floatite* (Bazzite-based images) — Settings → About, installer branding, hostname
--   Bluefin's *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a lean system summary with the foxy.png logo and a **Floatfin** title
+-   Bluefin's *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a lean system summary with the floatfin.png logo and a **Floatfin** title
 -   A dev-ops / sysadmin / web-dev CLI toolkit baked in: `ansible-core`, `gh`, `git-lfs`, `jq`, `shellcheck`, `sshpass`, `bind-utils`, `htop`, `iotop`, `iperf3`, `mtr`, `ncdu`, `net-tools`, `sysstat`, `tmux`, `tree`, `whois`, `wget`, `btop`, `fd-find`, `fzf`, `pv`, `ripgrep`, `nodejs`, `npm`, and `python3-pip`
 
 From Bluefin DX, you keep the usual developer tooling out of the box: VS Code, Docker/Podman, a Logo Menu, appindicator support and the `<CTRL><ALT>t` terminal shortcut. Rootful Docker and Starship are disabled by default, and Tailscale doesn't autostart.
