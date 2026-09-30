@@ -3,11 +3,13 @@
 # have switched from shipping Gnome extensions in RPMs from Fedora
 modules:
   - type: dnf
-    # Repos pre-seeded by the image: ublue-os/staging + ublue-os/packages
-    # COPRs (Silverblue recipes install files/repos/*.repo; the Bluefin base
-    # already ships them). Don't re-add them here — a duplicate repo id
-    # hard-fails the build.
+    repos:
+      copr:
+        - ublue-os/staging
+        - ublue-os/packages
     install:
       packages:    
         - gnome-shell-extension-appindicator
+        - gnome-shell-extension-dash-to-dock 
+        - gnome-shell-extension-blur-my-shell
         - gnome-tweaks

@@ -1,7 +1,5 @@
-# Favorites only list native apps (RPM). No flatpaks are pinned to the dock:
-# the image is flatpak-ready but ships nothing from Flathub.
 [org.gnome.shell]
-favorite-apps=['org.gnome.Nautilus.desktop','firefox.desktop','code.desktop']
+favorite-apps=['org.gnome.Nautilus.desktop','firefox.desktop','org.libreoffice.LibreOffice.writer.desktop','org.darktable.Darktable.desktop', 'com.discordapp.Discord.desktop','com.spotify.Client.desktop', 'code.desktop', 'io.github.kolunmi.Bazaar.desktop']
 
 [org.gnome.desktop.wm.preferences]
 button-layout=':minimize,maximize,close'
@@ -17,15 +15,23 @@ search-filter-time-type='last_modified'
 show-create-link=true
 show-delete-permanently=true
 
-# Lean desktop: no transitions, improved perceived speed.
+[org.gnome.shell.extensions.dash-to-dock]
+background-opacity=0.75
+custom-theme-shrink=true
+dash-max-icon-size=48
+dock-position='BOTTOM'
+intellihide-mode='FOCUS_APPLICATION_WINDOWS'
+require-pressure-to-show=false
+transparency-mode='FIXED'
+disable-overview-on-startup=true
+running-indicator-style='DOTS'
+
 [org.gnome.desktop.interface]
 clock-format='12h'
 clock-show-weekday=true
 color-scheme='prefer-dark'
-enable-animations=false
 show-battery-percentage=true
-# Terminal-first: Fira Code for the monospace font (fira-code-fonts).
-monospace-font-name='Fira Code 12'
+monospace-font-name='Intel One Mono 14'
 
 [org.gnome.desktop.background]
 picture-options='zoom'
@@ -37,20 +43,9 @@ startup-mode='cwd'
 [org.gtk.gtk4.settings.file-chooser]
 sort-directories-first=true
 
-# Only keep the search providers that exist on this image. Calculator,
-# Contacts, Maps, Weather, clocks and seahorse are now native RPMs (see
-# application-rpms.yml) so their providers are ENABLED; the rest are flatpaks
-# we don't ship (or providers we don't want cluttering results).
-[org.gnome.desktop.search-providers]
-disabled=['org.gnome.Boxes.desktop','org.gnome.Characters.desktop','org.gnome.Music.desktop','org.gnome.Todo.desktop','org.mozilla.firefox.desktop']
-
-# File indexing is disabled for speed (see also optimize-gnome.sh which masks
-# the Tracker services). Nautilus still works; full-text search is off.
-[org.freedesktop.Tracker3.Miner.Files]
-crawling-interval=-1
-index-on-battery=false
-index-recursive-directories=[]
-
 [org.gnome.Ptyxis]
 default-rows=32
 default-columns=128
+
+[org.gnome.shell.extensions.system-monitor-next-applet]
+custom-monitor-command='flatpak run io.missioncenter.MissionCenter'

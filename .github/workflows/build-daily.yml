@@ -7,7 +7,7 @@ on:
     paths-ignore: # don't rebuild if only stuff the workflow doesn't run has changed
       - "**.md"
       - "/*.sh"
-      - "installer/**"
+      - "iso-config/**"
       
   pull_request:
   workflow_dispatch: # allow manually triggering builds
@@ -31,7 +31,6 @@ jobs:
           # !! Add your recipes here 
           - floatfin-latest.yml
           - floatite.yml
-          - floatfin-silverblue.yml
     steps:
        # the build is fully handled by the reusable github action
       - name: Build Custom Image

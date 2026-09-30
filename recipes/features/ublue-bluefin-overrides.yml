@@ -6,13 +6,6 @@ modules:
     destination: /etc/dconf/db/distro.d
 - type: systemd
   system:
-    enable:
-    # Remote admin out of the box: web console, socket-activated SSH
-    # (zero idle RAM, spawns sshd on connect) and the docker-compatible
-    # podman API socket.
-    - cockpit.socket
-    - sshd.socket
-    - podman.socket
     disable:
     # Disable VPNs we don't use
     - tailscaled

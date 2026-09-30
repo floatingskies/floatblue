@@ -110,3 +110,58 @@ jobs:
           retention-days: 7
           compression-level: 0
           overwrite: true
+
+  publish-release:
+    name: Publish Latest ISO Release
+    runs-on: ubuntu-latest
+    needs: build-iso
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Publish the freshly built ISOs as a public GitHub Release so the
+      # website (and anyone else) can download them without authentication.
+      # Workflow artifacts are private; release assets are public.
+      - name: Download ISO Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: isos
+          merge-multiple: true
+
+      - name: Generate Release Body
+        shell: bash
+        run: |
+          REPO="${{ github.repository }}"
+          {
+            echo "Live desktop ISOs built automatically from the \`main\` branch."
+            echo
+            echo "Each ISO boots into the full desktop from the image and can install it to disk with the on-screen **Install to Disk** (Anaconda) launcher. Secure Boot is supported via the Universal Blue enrollment key."
+            echo
+            echo "## What changed since the previous ISO"
+            PREV=$(gh release view iso-latest --json tagName -q '.tagName' 2>/dev/null || true)
+            if [[ -n "$PREV" ]]; then
+              gh api "repos/$REPO/compare/$PREV...main" \
+                --jq '.commits[] | "- " + (.commit.message | split("\n")[0])'
+            else
+              echo "- First ISO release for this repository."
+            fi
+          } > release-body.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish / Update ISO Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: iso-latest
+          name: Float Live ISO (latest)
+          make_latest: true
+          overwrite: true
+          fail_on_unmatched_files: true
+          body_path: release-body.md
+          files: |
+            isos/*.iso
+            isos/*-CHECKSUM

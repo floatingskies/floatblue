@@ -10,8 +10,7 @@ set -eou pipefail
 #
 # The Floatfin fish greeting (/usr/share/fish/vendor_conf.d/fish_greeting.fish)
 # is shipped separately and intentionally left alone: it drops the banner and
-# runs a fastfetch summary with the foxy.txt mascot (config:
-# /usr/share/ublue-os/fastfetch.jsonc) as a lean system login.
+# runs `ublue-fastfetch` (with the foxy.png logo) as a lean system summary.
 rm -f /etc/profile.d/uwelcome.sh
 rm -f /etc/profile.d/user-motd.sh
 rm -f /etc/profile.d/ublue-motd.sh

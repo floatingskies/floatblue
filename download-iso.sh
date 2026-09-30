@@ -5,31 +5,27 @@
 #  ./download-iso.sh [IMAGE_NAME] [IMAGE_TAG]
 #
 #   IMAGE_NAME is floatfin (default)
-#   IMAGE_TAG is one of stable, gts, latest (default is gts)
+#   TAG_NAME is one of stable, gts, latest (default is gts)
 #
-# Generates a snapshot ISO locally with the build-container-installer image.
 
-set -euo pipefail
-
-if ! command -v podman >/dev/null 2>&1; then
+if [ -z $(command -v podman) ]; then
     echo "Podman is required"
     exit 1
 fi
-IMAGE_NAME=${1:-floatfin}
-IMAGE_TAG=${2:-gts}
+IMAGE_NAME=${1-floatfin}
+IMAGE_TAG=${2-gts}
 echo "Creating an ISO for the $IMAGE_NAME:$IMAGE_TAG image"
 rm -rf ./output
 mkdir ./output
-if ! sudo podman run --rm --privileged --volume "$(pwd)/output:/build-container-installer/build" --pull=always \
-    ghcr.io/jasonn3/build-container-installer:latest IMAGE_REPO=ghcr.io/floatingskies \
-    IMAGE_NAME="$IMAGE_NAME" \
-    IMAGE_TAG="$IMAGE_TAG" \
-    VARIANT=Silverblue ; then
-    echo "Failed to build ISO"
+if ! sudo podman run --rm --privileged --volume ./output:/build-container-installer/build --pull=always \
+ ghcr.io/jasonn3/build-container-installer:latest IMAGE_REPO=ghcr.io/floatingskies \
+ IMAGE_NAME=$IMAGE_NAME \
+ IMAGE_TAG=$IMAGE_TAG \
+ VARIANT=Silverblue ; then
+    echo "Failed to download image"
     exit 1
-fi
-sudo chown "$USER:$USER" output/*
-BASENAME="$IMAGE_NAME-$(date +"%Y%m%d")"
-sudo mv output/deploy.iso "output/$BASENAME.iso"
-sudo mv output/deploy.iso-CHECKSUM "output/$BASENAME.iso-CHECKSUM"
-echo "ISO ready: output/$BASENAME.iso (+ CHECKSUM)"
+fi 
+sudo chown $USER:$USER output/*
+BASENAME=$IMAGE_NAME-$(date +"%Y%m%d")
+sudo mv output/deploy.iso output/$BASENAME.iso
+sudo mv output/deploy.iso-CHECKSUM output/$BASENAME.iso-CHECKSUM

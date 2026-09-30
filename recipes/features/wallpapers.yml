@@ -1,9 +1,24 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
-# The only wallpapers this image ships are the hand-picked `floatfin` set
-# baked in via system-files. Everything else — stock GNOME, Fedora releases,
-# KDE/Plasma — is purged at build time and GNOME's picker is repointed at the
-# floatfin collection.
 modules:
+  - type: dnf
+    repos:
+      copr:
+        - ublue-os/packages
+    install:
+      packages:
+        - gnome-backgrounds-extras
+        - f41-backgrounds-base
+        - f40-backgrounds-base
+        - f39-backgrounds-base
+        # KDE/Plasma wallpaper collections (historic KDE + modern Plasma)
+        - kde-wallpapers
+        - plasma-workspace-wallpapers
+
   - type: script
     scripts:
-      - install-floatfin-wallpapers.sh
+      - install-ubuntu-wallpapers.sh      
+      - install-system76-wallpaper.sh
+      - install-framework-wallpaper.sh
+      - install-kde-wallpapers.sh
+      - install-floating-woof.sh
+      - install-floating-skies.sh

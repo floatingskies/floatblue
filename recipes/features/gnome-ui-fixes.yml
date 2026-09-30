@@ -7,7 +7,6 @@ modules:
     install:
       - Accent Icons
       - Weather or Not
-      - Caffeine
 
   - type: bling
     install:

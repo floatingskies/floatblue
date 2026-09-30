@@ -1,11 +1,11 @@
 #!/usr/bin/bash
 
-# Convenience script for building images locally.
-# Usage: ./build-image.sh <recipe.yml>
+# This is a convenience script for building images locally.
+# I'm sick of all the typing!
 
-if command -v bluebuild >/dev/null 2>&1; then
-    bluebuild build --build-driver=podman "$1"
-else
-    echo "Bluebuild is not installed — run 'cargo install bluebuild' or use the GitHub Actions workflow."
+if [ $(command -v bluebuild) ]; then
+    bluebuild build --build-driver=podman $1
+else 
+    echo "Bluebuild not installed, can't build!"
     exit 1
 fi

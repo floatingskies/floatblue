@@ -3,97 +3,101 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>floatfin — a wizard-fox Fedora Atomic desktop</title>
-  <meta name="description" content="Floatfin: immutable, signed, terminal-first Fedora Atomic desktop images on Silverblue, Bluefin and Bazzite — with a wizard, a fox, distrobox and Nix baked in. Download the latest live ISO straight from CI, or rebase an existing system.">
+  <title>floatfin — a homegrown Fedora Atomic desktop</title>
+  <meta name="description" content="A small Fedora Atomic desktop I actually use every day: Silverblue, Bluefin and Bazzite images with nice wallpapers, fonts, tools and a live installer. Snapshot ISOs come out by hand, once a month.">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#17b2d4">
+  <meta name="theme-color" content="#bfeef7">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M22.7 5.1C13.8 6.9 7.8 14.3 6.9 22.4c-.2 1.9 1.5 3.4 3.4 3.1 6.4-1 13-5.8 15.6-13.5.9-2.6.1-5.4-3.2-6.9z' fill='%2317b2d4'/%3E%3Cpath d='M19.4 18.4c4.5-9.1 8.9-11.4 8.9-11.4s3.6 6.9.7 12.6c-2.2 4.4-7.4 6.6-12 3.6.8-1.6 1.6-3.2 2.4-4.8z' fill='%23ff7d5e' opacity='.8'/%3E%3C/svg%3E">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
   <link rel="stylesheet" href="assets/styles.css">
   <script defer src="assets/app.js"></script>
 </head>
 <body>
+  <div class="caustics" aria-hidden="true"></div>
+
   <a class="skip-link" href="#download">Skip to download</a>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <a class="brand" href="#top" aria-label="floatfin home">
-        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-          <path d="M22.7 5.1C13.8 6.9 7.8 14.3 6.9 22.4c-.2 1.9 1.5 3.4 3.4 3.1 6.4-1 13-5.8 15.6-13.5.9-2.6.1-5.4-3.2-6.9z" fill="currentColor"/>
-        </svg>
-        <span>
-          <span class="brand-name">float<em>fin</em></span>
-          <div class="brand-tagline">a wizard-fox fedora atomic desktop</div>
-        </span>
-      </a>
-      <nav class="site-nav" aria-label="Primary">
-        <a href="#features">Features</a>
-        <a href="#editions">Editions</a>
-        <a href="#download">Download</a>
-        <a href="#install">Install</a>
-        <a href="#changelog">News</a>
-        <a href="https://github.com/floatingskies/floatfin" target="_blank" rel="noopener noreferrer">Source</a>
-        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle day and night">
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-        </button>
-      </nav>
-    </div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="floatfin home">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M22.7 5.1C13.8 6.9 7.8 14.3 6.9 22.4c-.2 1.9 1.5 3.4 3.4 3.1 6.4-1 13-5.8 15.6-13.5.9-2.6.1-5.4-3.2-6.9z" fill="currentColor"/>
+      </svg>
+      <span class="brand-name">floatfin</span>
+    </a>
+    <nav class="topnav" aria-label="Primary">
+      <a href="#about">Why</a>
+      <a href="#download">Download</a>
+      <a href="#changelog">What's new</a>
+      <a href="https://github.com/floatingskies/floatfin" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle day and night">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </nav>
   </header>
 
   <main id="top">
     <!-- HERO -->
     <section class="hero">
-      <div class="hero-inner">
-        <p class="eyebrow reveal">the easy way to a terminal-first desktop</p>
-        <h1 class="reveal">Floatfin<span class="dot">.</span></h1>
-        <p class="reveal">
-          An immutable, signed, bootable-container desktop built on
-          <a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin DX</a>,
-          <a href="https://bazzite.gg" target="_blank" rel="noopener noreferrer">Bazzite (GNOME)</a> and
-          <a href="https://silverblue.fedoraproject.org/" target="_blank" rel="noopener noreferrer">Fedora Atomic</a>.
-          Terminal-first, but friendly: every tweak is baked in at build time — the whole GNOME app set,
-          distrobox, Nix with flakes, a socket-activated sshd, and a wizard that walks you through it all.
-        </p>
-        <div class="hero-actions reveal">
-          <a class="btn btn-primary" href="#download">Download the live ISO</a>
-          <a class="btn btn-ghost" href="#editions">Pick an edition</a>
-          <a class="btn btn-ghost" href="#install">Already on an Atomic system?</a>
-        </div>
+      <div class="sun" aria-hidden="true"></div>
+      <div class="bubbles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+      <p class="eyebrow reveal">bootable containers · rebuilt whenever I feel like it</p>
+      <h1 class="hero-title reveal">floatfin<span class="dot">.</span></h1>
+      <div class="hero-rule reveal" aria-hidden="true"></div>
+      <p class="hero-sub reveal">
+        My daily Fedora Atomic desktop, layered on
+        <a href="https://silverblue.fedoraproject.org/" target="_blank" rel="noopener noreferrer">Silverblue</a>,
+        <a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin</a>, or
+        <a href="https://bazzite.gg" target="_blank" rel="noopener noreferrer">Bazzite</a>.
+        It's a side project, not a product — so it just does the small things I actually
+        want: nice wallpapers, comfy fonts, useful tools, and a live installer that works.
+      </p>
+      <div class="hero-actions reveal">
+        <a class="btn btn-primary" href="#download">Download the ISO</a>
+        <a class="btn-text" href="https://github.com/floatingskies/floatfin" target="_blank" rel="noopener noreferrer">view the repo</a>
       </div>
+      <p class="hero-meta reveal">three bases, one friendly GNOME · no tracking, just Linux</p>
     </section>
 
-    <!-- FEATURES -->
-    <section class="band" id="features">
+    <!-- WHY -->
+    <section class="band" id="about">
       <div class="wrap">
-        <p class="eyebrow reveal">why it's worth a look</p>
-        <h2 class="section-title reveal">Everything is baked in. Nothing breaks you into it.</h2>
+        <p class="eyebrow reveal">why i bothered</p>
+        <h2 class="section-title reveal">A daily driver, not a project.</h2>
+        <p class="lede reveal">
+          It started as one tiny tweak and snowballed into the system I run every day.
+          Nothing here is fancy — just the sum of little things that make a machine feel like mine.
+        </p>
         <ul class="feature-list reveal">
           <li><strong>Atomic &amp; signed</strong> — immutable images with clean rollbacks, verified with cosign.</li>
-          <li><strong>Terminal-first, wizard-guided</strong> — a curated fish + Starship prompt in Fira Code, aliases to eza/bat/btop/zoxide, and the <code>float</code> wizard: an easy tour, a workbench and power tools, all from one command.</li>
-          <li><strong>Containers baked in</strong> — rootless Docker + podman, Cockpit on :9090, sshd socket-activated, <strong>distrobox</strong> (any distro's packages, sharing your home), and Fedora's official <strong>Nix</strong> with flakes on.</li>
-          <li><strong>The whole GNOME core, native RPMs</strong> — Calendar, Clocks, Contacts, Maps, Weather, Connections, Calculator, Text Editor, seahorse… plus the GNOME Tour for first-timers. No flatpaks baked in.</li>
-          <li><strong>Lean GNOME</strong> — ~1.5 GB idle RAM: idle services and bloat purged, animations off, tuned swap and BBR.</li>
-          <li><strong>Gaming ready</strong> — Steam, GameMode, Gamescope, Mangohud (32-bit included), Vulkan tools.</li>
-          <li><strong>One desktop, three bases</strong> — the same curated GNOME on Silverblue, Bluefin and Bazzite.</li>
+          <li><strong>One GNOME, everywhere</strong> — the same curated desktop on Silverblue, Bluefin, and Bazzite.</li>
+          <li><strong>Wallpapers that wander</strong> — a floating-woof default per edition, plus System76, Framework, Ubuntu, and KDE/Plasma collections in the picker.</li>
+          <li><strong>Little comforts</strong> — Firefox as the browser, Intel One Mono, Docker rootless, VM tooling.</li>
+          <li><strong>Flatpaks curated</strong> — a chosen set of sandboxed apps baked into the image.</li>
+          <li><strong>A real installer</strong> — boot a snapshot to try it, or install it to disk; Secure Boot works.</li>
         </ul>
       </div>
     </section>
 
+    <div class="wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path fill="currentColor" d="M0 26 C 210 46, 420 12, 630 24 S 1050 40, 1260 20 1380 6, 1440 18 L1440 44 L0 44 Z"/></svg>
+    </div>
+
     <!-- EDITIONS -->
-    <section class="band" id="editions">
+    <section class="band band-sun" id="editions">
       <div class="wrap">
         <p class="eyebrow reveal">editions</p>
         <h2 class="section-title reveal">Pick your flavour.</h2>
         <div class="editions">
           <article class="edition reveal">
             <h3 class="edition-name">Floatfin <span class="muted">— Silverblue</span></h3>
-            <p><strong>Backup edition.</strong> The same Floatfin customizations — terminal-first tools, <code>float</code> wizard, Nix, distrobox, fox branding — baked onto <em>stock</em> Fedora Silverblue, always one Fedora release behind Bluefin. If the universal-blue bases ever go away, rebase here and nothing changes.</p>
+            <p>Fedora Silverblue base. Visual Studio Code, libvirt/Virt-Manager, GNOME conveniences like Dash-to-Dock and a proper terminal shortcut.</p>
             <p class="taglist"><span class="tag">gts · Fedora 43 · weekly</span><span class="tag">stable · Fedora 44 · weekly</span><span class="tag">latest · Fedora 44 · daily</span></p>
           </article>
           <article class="edition edition-highlight reveal">
             <h3 class="edition-name">Floatfin <span class="muted">— Bluefin DX</span></h3>
-            <p>Based on Bluefin's developer image, dev tools included. Starship prompt on, rootless Docker, <strong>distrobox</strong>, Nix with flakes, Homebrew friendly, a performance-trimmed GNOME, and the <code>float</code> wizard to get you going fast.</p>
+            <p>Based on Bluefin's developer image, dev tools included. Starship turned off by default, rootless Docker, a thoughtful Flatpak set. This one is my daily driver.</p>
             <p class="taglist"><span class="tag">latest · daily</span></p>
           </article>
           <article class="edition reveal">
@@ -109,48 +113,54 @@
     <section class="band" id="download">
       <div class="wrap">
         <p class="eyebrow reveal">download</p>
-        <h2 class="section-title reveal">Getting Floatfin.</h2>
+        <h2 class="section-title reveal">Stable ISOs, month by month.</h2>
         <p class="lede reveal">
-          The live ISOs come straight from CI: the card below is filled with the most recent
-          <strong>successful</strong> <a href="https://github.com/floatingskies/floatfin/actions/workflows/build-iso.yml" target="_blank" rel="noopener noreferrer">Build Live ISOs</a>
-          artifact. GitHub trims artifacts after a while, so if the link is gone, trigger the workflow
-          yourself — a fresh <code>.zip</code> appears on the run page.
+          Built by the
+          <a href="https://github.com/floatingskies/floatfin/actions/workflows/build-iso.yml" target="_blank" rel="noopener noreferrer">Build Live ISOs</a>
+          workflow and published by hand, about once a month — roughly following the Fedora release cadence,
+          so each snapshot is a stable, tested moment in time. Every ISO ships with a
+          <code>-CHECKSUM</code> file, so you can verify before flashing.
         </p>
 
-        <div class="iso-card reveal" id="iso-card" aria-live="polite">
-          <p class="iso-title" id="iso-title">Looking for the last successful build…</p>
-          <p class="iso-meta" id="iso-meta" hidden></p>
-          <div class="download-row">
-            <a class="btn btn-primary" id="iso-download" hidden>Download the ISO (.zip)</a>
-            <a class="btn btn-ghost" id="iso-runs" hidden target="_blank" rel="noopener noreferrer">Browse CI runs</a>
-          </div>
-        </div>
+        <ul class="feature-list release-list reveal">
+          <li><strong>Floatfin (Silverblue)</strong> — <code>floatfin-stable-live-amd64.iso</code></li>
+          <li><strong>Floatfin</strong> — <code>floatfin-latest-live-amd64.iso</code></li>
+          <li><strong>Floatite</strong> — <code>floatite-latest-live-amd64.iso</code></li>
+        </ul>
 
-        <p class="lede reveal mt"><strong>Then what?</strong> Four ways to use it:</p>
-        <ol class="steps reveal">
-          <li><strong>Download the <code>.zip</code></strong> — inside you'll find a <code>*-live-amd64.iso</code> plus its <code>-CHECKSUM</code>. Verify before flashing: <code>sha256sum -c *.iso-CHECKSUM</code>.</li>
-          <li><strong>Write it to a USB stick</strong> — drop the ISO onto <a href="https://www.ventoy.net" target="_blank" rel="noopener noreferrer">Ventoy</a> with nothing else to do, use <a href="https://rufus.ie" target="_blank" rel="noopener noreferrer">Rufus</a> on Windows, or <a href="https://etcher.balena.io" target="_blank" rel="noopener noreferrer">balenaEtcher</a> on macOS/Linux. (Or the classics: <code>sudo dd if=Floatfin.iso of=/dev/sdX bs=4M status=progress</code>.)</li>
-          <li><strong>Boot it</strong> — the live desktop appears; pick <strong>Install to Disk</strong> (Anaconda) to install. Secure Boot works with the Universal Blue enrollment key.</li>
-          <li><strong>Or try it in a VM first</strong> — just boot the ISO in <a href="https://wiki.gnome.org/Apps/Boxes" target="_blank" rel="noopener noreferrer">GNOME Boxes</a>, QEMU/KVM, VirtualBox or <a href="https://mac.getutm.app" target="_blank" rel="noopener noreferrer">UTM</a>. Nothing touches your real disk.</li>
-        </ol>
+        <p class="center reveal">
+          <a class="btn btn-primary" id="drive-link" target="_blank" rel="noopener noreferrer">Browse ISOs on Google Drive</a>
+        </p>
+        <p class="hint center" id="drive-hint" hidden>Drive folder coming soon…</p>
       </div>
     </section>
 
-    <!-- INSTALL -->
-    <section class="band" id="install">
+    <div class="wave" aria-hidden="true">
+      <svg viewBox="0 0 1440 44" preserveAspectRatio="none"><path fill="currentColor" d="M0 26 C 210 46, 420 12, 630 24 S 1050 40, 1260 20 1380 6, 1440 18 L1440 44 L0 44 Z"/></svg>
+    </div>
+
+    <!-- HOW TO -->
+    <section class="band band-sun" id="how">
       <div class="wrap">
-        <p class="eyebrow reveal">already on linux?</p>
-        <h2 class="section-title reveal">Rebase, don't reinstall.</h2>
-        <p class="lede reveal">
-          On any Fedora Atomic / Universal Blue image, switching is one command — then pick the older
-          boot entry if anything feels off.
-        </p>
-        <pre class="code reveal">sudo bootc switch ghcr.io/floatingskies/floatfin:latest --enforce-container-sigpolicy
-systemctl reboot</pre>
-        <p class="lede reveal mt">
-          Day-1 refreshers: <code>float</code> (the wizard), <code>distrobox enter fedora</code>, <code>nix run nixpkgs#hello</code>,
-          Cockpit at <code>https://&lt;host&gt;:9090</code>.
-        </p>
+        <p class="eyebrow reveal">make it yours</p>
+        <h2 class="section-title reveal">Boot or install in minutes.</h2>
+        <div class="how-grid">
+          <article class="how-card reveal">
+            <h3>Try it live</h3>
+            <p>Write the snapshot to a USB stick with <strong>balenaEtcher</strong>, <strong>Rufus</strong>, or on Linux/macOS:</p>
+            <pre class="code">sudo dd if=Floatfin-...live-amd64.iso \
+  of=/dev/sdX bs=4M status=progress</pre>
+            <p class="hint">Find the right device with <code>lsblk</code>, trust the whole stick, then boot from it.</p>
+          </article>
+          <article class="how-card reveal">
+            <h3>Install it for good</h3>
+            <p>Launch <strong>Install to Disk</strong> from the live desktop (Anaconda). Secure Boot is supported — enroll the
+              <a href="https://docs.ublue.io/" target="_blank" rel="noopener noreferrer">Universal Blue</a> key or keep your own. Already on an Atomic system?</p>
+            <pre class="code">sudo bootc switch \
+  ghcr.io/floatingskies/floatfin:latest</pre>
+            <p class="hint">Then <code>systemctl reboot</code>. If something feels off, pick the older boot entry.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -161,63 +171,31 @@ systemctl reboot</pre>
         <h2 class="section-title reveal">Recent changes.</h2>
         <div class="grid-2">
           <article class="panel reveal">
-            <h3 class="panel-title">Latest commits</h3>
-            <ul class="commits" id="commits" aria-live="polite">
-              <li>Loading commits…</li>
-            </ul>
-            <p class="hint"><a href="https://github.com/floatingskies/floatfin/commits/main" target="_blank" rel="noopener noreferrer">browse the full changelog on GitHub</a></p>
+            <h3 class="panel-title">Monthly releases</h3>
+            <p class="hint">
+              New stable snapshots are published around each Fedora release, so the ISOs get to
+              move at their own pace. Grab the latest one from the download section and verify it
+              against its <code>-CHECKSUM</code> before flashing.
+            </p>
           </article>
           <article class="panel reveal">
-            <h3 class="panel-title">About this page</h3>
-            <p class="hint">No tracking, no cookies, no frameworks. The download button is filled client-side
-              from the GitHub Actions API — the same endpoint the CI uses to store the ISOs.</p>
+            <h3 class="panel-title">Latest commits</h3>
+            <ul class="commits" id="commits" aria-live="polite">
+              <li class="hint">Loading commits…</li>
+            </ul>
           </article>
         </div>
+        <p class="lede center reveal">
+          <a href="https://github.com/floatingskies/floatfin/commits/main" target="_blank" rel="noopener noreferrer">browse the full changelog on GitHub</a>
+        </p>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="footer-cols">
-        <div>
-          <h4>Editions</h4>
-          <ul>
-            <li><a href="#editions">Floatfin — Silverblue</a></li>
-            <li><a href="#editions">Floatfin — Bluefin DX</a></li>
-            <li><a href="#editions">Floatite — Bazzite DX</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Getting it</h4>
-          <ul>
-            <li><a href="#download">Live ISO from CI</a></li>
-            <li><a href="#install">Rebase an Atomic system</a></li>
-            <li><a href="https://github.com/floatingskies/floatfin/actions/workflows/build-iso.yml" target="_blank" rel="noopener noreferrer">Build Live ISOs workflow</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Development</h4>
-          <ul>
-            <li><a href="https://github.com/floatingskies/floatfin" target="_blank" rel="noopener noreferrer">Source on GitHub</a></li>
-            <li><a href="https://github.com/floatingskies/floatfin/actions" target="_blank" rel="noopener noreferrer">CI builds</a></li>
-            <li><a href="https://blue-build.org" target="_blank" rel="noopener noreferrer">Built with BlueBuild</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4>Thanks</h4>
-          <ul>
-            <li><a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin</a></li>
-            <li><a href="https://bazzite.gg" target="_blank" rel="noopener noreferrer">Bazzite</a></li>
-            <li><a href="https://docs.ublue.io" target="_blank" rel="noopener noreferrer">Universal Blue</a></li>
-            <li><a href="https://fedoraproject.org" target="_blank" rel="noopener noreferrer">Fedora Project</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <span>An unofficial personal project, not affiliated with Universal Blue or the Fedora Project.</span>
-        <a href="#top">back to top</a>
-      </div>
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <p>Built by hand near the sea, one commit at a time. No tracking, no cookies, just Linux.</p>
+      <p class="hint">Made with <a href="https://blue-build.org" target="_blank" rel="noopener noreferrer">BlueBuild</a> · an unofficial personal project, not affiliated with Universal Blue or the Fedora Project.</p>
     </div>
   </footer>
 </body>

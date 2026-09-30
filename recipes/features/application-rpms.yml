@@ -2,7 +2,6 @@
 modules:
   - type: dnf
     install:
-      skip-unavailable: true
       packages:
         - langpacks-en
         - nss-tools
@@ -12,28 +11,3 @@ modules:
         - fastfetch
         - clinfo
         - firefox
-        # GNOME core apps, native RPMs (not flatpaks). A complete, approachable
-        # desktop for new users; search providers re-enabled in the gschema
-        # overrides. gnome-tour is the interactive onboarding for beginners.
-        - gnome-text-editor
-        - loupe
-        - gnome-calculator
-        - gnome-calendar
-        - gnome-characters
-        - gnome-clocks
-        - gnome-connections
-        - gnome-contacts
-        - gnome-maps
-        - gnome-weather
-        - seahorse
-        - gnome-tour
-        # Remote admin: sshd.socket is enabled in ublue-bluefin-overrides,
-        # so the server must already be present when that runs.
-        - openssh-server
-  # VLC: the Bluefin base already ships negativo17's fedora-multimedia repo
-  # (used for its codecs), so we only need to install the package.
-  - type: dnf
-    install:
-      skip-unavailable: true
-      packages:
-        - vlc

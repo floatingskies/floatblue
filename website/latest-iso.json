@@ -1,8 +1,0 @@
-{
-  "_comment": "Optional hand-maintained override for the download card. If GitHub gives you the API 404-less (private repo) or you want to pin a specific artifact, fill this in and the site shows it instead of querying CI. Leave the fields null or delete this file to use the live query. All fields except name are optional.",
-  "name": null,
-  "url": null,
-  "size": null,
-  "built": null,
-  "expires": null
-}

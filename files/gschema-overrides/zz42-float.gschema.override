@@ -8,4 +8,4 @@ titlebar-font='Intel One Mono 11'
 [org.gnome.desktop.interface]
 font-name='Intel One Mono 11'
 document-font-name='Adwaita Sans 11'
-monospace-font-name='Fira Code 12'
+monospace-font-name='Intel One Mono 14'

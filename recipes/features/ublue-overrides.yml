@@ -5,12 +5,22 @@ modules:
     - source: dconf-ublue
       destination: /etc/dconf/db/distro.d
 - type: dnf
-  # ublue-os/staging + ublue-os/packages COPRs are pre-seeded by the image
-  # (files/repos/*.repo on Silverblue, the base on Bluefin); never re-add.
+  repos:
+    # files:
+      # These repos have the Readymade installer, which is used in the ISO
+      # build process.  They already exist on Bluefin.
+      # However, this doesn't work with the dnf plugin, so we use
+      # the script snippets above, copypasta from Bluefin
+      # - https://repos.fyralabs.com/terra%OS_VERSION%
+      # - https://repos.fyralabs.com/terra%OS_VERSION%-extras
+    copr:
+      - ublue-os/staging
+      - ublue-os/packages
   install:
     packages:
       # These are generally packages from Bluefin (DX)
       # that we want, but aren't in the Silverblue image
+      - gnome-shell-extension-logo-menu
       - ublue-polkit-rules
       - ublue-os-signing
       - ublue-brew
@@ -31,8 +41,8 @@ modules:
       - gnome-software
 - type: systemd
   system:
-    enable:
+    enabled:
       - uupd.timer
-    disable:
+    disabled:
       - rpm-ostreed-automatic.timer
       - flatpak-system-update.timer

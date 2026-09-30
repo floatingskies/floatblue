@@ -1,17 +1,10 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
 
-# These are the features common to all Bluefin-shaped Floatfin images.
-# Order matters: overrides (which enable systemd units) must run after the
-# features that install those units.
+# These are the features common to all Bluefin-shaped Floatfin images
 modules:
   - from-file: features/system-files.yml
   - from-file: features/application-rpms.yml
   - from-file: features/fonts.yml
   - from-file: features/gnome-ui-fixes.yml
-  - from-file: features/terminal.yml
-  - from-file: features/wallpapers.yml
-  - from-file: features/cockpit.yml
-  - from-file: features/virtualization.yml
-  - from-file: features/gaming.yml
-  - from-file: features/nix.yml
   - from-file: features/ublue-bluefin-overrides.yml
+  - from-file: features/wallpapers.yml

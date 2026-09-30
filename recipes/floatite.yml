@@ -16,15 +16,16 @@ modules:
   - from-file: features/application-rpms.yml
   - from-file: features/devops.yml
   - from-file: features/cockpit.yml
-  - from-file: features/nix.yml
   - from-file: features/fonts.yml
-  - from-file: features/terminal.yml
   - from-file: features/gnome-ui-fixes.yml
   - from-file: features/wallpapers.yml
-  - type: gschema-overrides  # Float defaults: Intel One Mono interface font + tower-of-firewatch.jpg wallpaper
+  - type: gschema-overrides  # Float defaults: Intel One Mono interface font + fox.jpg wallpaper
     include:
       - zz42-float.gschema.override
       - zz999-float-bazzite-wallpaper.gschema.override
+  - type: gnome-extensions
+    install:
+      - Dash to Dock
   - type: script
     scripts:
       - ublue-disable-steam-autostart.sh

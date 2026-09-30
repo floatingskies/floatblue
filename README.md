@@ -1,67 +1,88 @@
 # floatfin &nbsp; [![bluebuild build badge](https://github.com/floatingskies/floatfin/actions/workflows/build-daily.yml/badge.svg)](https://github.com/floatingskies/floatfin/actions/workflows/build-daily.yml)
 
-Immutable, signed, bootable-container desktop images tuned for **sysadmin / devops work and gaming**. Built on [Bluefin DX](https://projectbluefin.io) and [Bazzite (GNOME)](https://bazzite.gg) with [BlueBuild](https://blue-build.org); every tweak is baked in at build time.
+A bit opinionated distro made by Float.
 
-**Ours is the *wizard-fox* terminal-first edition**: same rock-solid immutable base, but the terminal is a first-class citizen and every skill level has a door. Type `float` in any terminal and the wizard walks you from first boot to power-user tricks.
+A set of [Bootable Container](https://containers.github.io/bootable/) images built on top of [Bluefin DX](https://projectbluefin.io) and [Bazzite](https://bazzite.gg) (GNOME) with [BlueBuild](https://blue-build.org)'s tools. Everything below is baked into the image at build time as a layer over the Universal Blue base, including a regenerated initramfs so the boot-time branding survives.
 
-<p align="center"><img src="branding/foxy.png" alt="Floatfin — the wizard fox" width="320"></p>
+Modifications baked into the image:
 
-## Why you'd retire for this
+-   Firefox as the default browser (installed from RPM)
+-   **Default wallpaper** — `fox.jpg` from the `floating-skies` collection on both Bluefin and Bazzite (available alongside `floating-woof` and the System76, Framework, Ubuntu, and KDE/Plasma collections in the GNOME wallpaper picker)
+-   [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html) set as the default interface font (the document font stays Adwaita Sans)
+-   Steam installed on the Bluefin images from negativo17 (Bazzite already ships it)
+-   Clocks set to AM/PM view with Weekday Display
+-   Single click to open items in Nautilus
+-   Use smaller icons in Nautilus icon view
+-   Sort directories first in Nautilus and GTK file choosers
+-   Dark styles enabled by default
+-   Dash-to-Dock docked at the bottom, skipping the Overview on login
+-   Windows have minimize and maximize buttons
+-   Touchpad tap-to-click enabled
+-   Fedora/GDM logo pixmaps and the Plymouth spinner watermark swapped for our own, and the initramfs rebuilt so they show from first boot
+-   The OS identifies itself as *Floatfin* (Bluefin-based images) and *Floatite* (Bazzite-based images) — Settings → About, installer branding, hostname
+-   Bluefin's *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a lean system summary with the foxy.png logo and a **Floatfin** title
+-   A dev-ops / sysadmin / web-dev CLI toolkit baked in: `ansible-core`, `gh`, `git-lfs`, `jq`, `shellcheck`, `sshpass`, `bind-utils`, `htop`, `iotop`, `iperf3`, `mtr`, `ncdu`, `net-tools`, `sysstat`, `tmux`, `tree`, `whois`, `wget`, `btop`, `fd-find`, `fzf`, `pv`, `ripgrep`, `nodejs`, `npm`, and `python3-pip`
 
-- **A real admin console out of the box** — [Cockpit](https://cockpit-project.org) (system/storage/network/containers web UI) enabled on boot at `https://<host>:9090`, `sshd` enabled, and a full CLI battery: `ansible-core`, `tmux`, `btop`, `htop`, `iotop`, `ncdu`, `lsof`, `psmisc`, `strace`, `nmap`, `tcpdump`, `rsync`, `sysstat`, `iperf3`, `mtr`, `smartctl`…
-- **Terminal-first, but friendly** — curated **fish** + **Starship** prompt in Fira Code: `l`/`cat`/`top` already map to `eza`/`bat`/`btop`, `cd` jumps with zoxide, and the **`float` wizard** walks you through three tiers: *the easy tour* (updates, installs, GNOME Tour), *the workbench* (distrobox, nix, podman, ssh, Cockpit) and *system power tools* (bootc rebase/rollback, cosign verify, audits). Beginners aren't an afterthought.
-- **The whole GNOME core, native RPMs** — Calendar, Clocks, Contacts, Maps, Weather, Connections, Calculator, Characters, Text Editor, `seahorse`… plus the interactive **GNOME Tour** for first-timers. No flatpaks baked in; search providers wired up for the installed set.
-- **Performance-tuned GNOME** — idle RAM ~1.5 GB (stock desktop images idle near 2 GB and up): bloatware and ~20 idle services (Bluetooth daemon, remote desktop, ModemManager, ABRT, PackageKit, Tracker indexers, auto-update timers…) purged; animations off; tuned swap/cache + BBR networking.
-- **Devops workbench** — Bluefin DX base: VS Code, rootless Docker + podman, Homebrew. On top: `podman.socket`, `podman-compose`, **`distrobox`**, `buildah`, `skopeo`, `gh`, `git-lfs`, `yq`, `bat`, `eza`, `duf`, `fzf`, `ripgrep`, `fd-find`, `nodejs`/`npm`/`python3-pip`.
-- **Nix, ready to go** — Fedora's official Nix with **flakes enabled by default** and a socket-activated multi-user daemon sharing one store across users: `nix run nixpkgs#hello`, `nix develop`, `nix-shell`. (Also Homebrew and Flatpak coexist fine.)
-- **KVM virtualization** — libvirt, `virt-manager` and VM tooling ready to go.
-- **Gaming ready** — Steam (Bluefin builds), **GameMode**, **Gamescope**, **Mangohud** (32-bit included), Vulkan tools.
-- **Flatpak-ready, zero flatpaks shipped** — Flathub works; nothing baked in. Dock shows only native apps.
+From Bluefin DX, you keep the usual developer tooling out of the box: VS Code, Docker/Podman, a Logo Menu, appindicator support and the `<CTRL><ALT>t` terminal shortcut. Rootful Docker and Starship are disabled by default, and Tailscale doesn't autostart.
 
-## Install (from any Fedora Atomic / Universal Blue image)
+Bluefin's default Flatpaks still install on first login; no extra Flatpaks are baked into the image.
 
-```bash
+## Image Tags
+
+`floatfin` is an overlay on [Bluefin DX](https://docs.projectbluefin.io/administration#upgrades-and-throttle-settings) following Bluefin's image channels:
+
+-   `ghcr.io/floatingskies/floatfin:gts` -- Bluefin's gts stream, updated weekly
+-   `ghcr.io/floatingskies/floatfin:stable` -- Bluefin's stable-weekly stream, updated weekly
+-   `ghcr.io/floatingskies/floatfin:latest` -- Bluefin's latest stream, updated daily
+-   `ghcr.io/floatingskies/floatite:latest` -- Bazzite (GNOME) DX, updated daily
+
+## Installation
+
+First, install any [Fedora Atomic](https://fedoraproject.org/atomic-desktops/) or [Universal Blue](https://universal-blue.org) desktop edition (preferably one that features GNOME, like Silverblue or Bluefin).
+
+Then use `bootc switch` to switch to the image. For example:
+
+```
 sudo bootc switch ghcr.io/floatingskies/floatfin:latest --enforce-container-sigpolicy
+```
+
+Then reboot
+
+```
 systemctl reboot
 ```
 
-## Images
+## Installing via ISO
 
-| Tag | Base | Schedule | Use |
-| :--- | :--- | :--- | :--- |
-| `floatfin:gts` | Bluefin GTS | weekly | production / enterprise |
-| `floatfin:stable` | Bluefin Stable | weekly | daily driver |
-| `floatfin:latest` | Bluefin Latest | daily | newest features |
-| `floatite:latest` | Bazzite DX GNOME | daily | gaming / handheld |
-| `floatfin-silverblue:gts` | **Silverblue 43** | weekly | backup edition |
-| `floatfin-silverblue:latest` (also `stable`) | **Silverblue 44** | daily | backup edition |
+If you have `podman` installed on your system, you can generate an offline ISO with the `download-iso.sh` script in this directory, like this:
 
-The **Silverblue backup editions** are insurance: the exact same Floatfin customizations (terminal-first tools, `float` wizard, Nix, distrobox, dock, cockpit/SSH/podman sockets, fox branding) baked onto **stock Fedora Silverblue**, always one Fedora release behind Bluefin — no Universal Blue base involved. If Bluefin ever disappears, run `sudo bootc switch ghcr.io/floatingskies/floatfin-silverblue:latest` and nothing changes.
-
-## ISO & live desktop
-
-- **Live ISO:** trigger the **Build Live ISOs** workflow in Actions, download the `*-live` artifact (kept **7 days** — too big for GitHub Releases), boot it, then run **Install to Disk**. Secure Boot supported.
-- **Offline ISO:** `./download-iso.sh floatfin gts` *(tag: `gts`, `stable` or `latest`)*
-
-## Day-1 commands
-
-```bash
-float                           # the wizard: easy tour → workbench → power tools
-ssh <host>                      # remote shell (openssh socket-activated)
-https://<host>:9090             # Cockpit admin web UI
-distrobox enter fedora          # drop into a full Fedora container, share ~
-distrobox enter ubuntu -- bash  # ...or any other distro
-nix run nixpkgs#hello           # first Nix command (multi-user daemon is already running)
-nix develop nixpkgs#python3     # drop into a Python shell from nixpkgs
-# Nix store lives on persistent /var: the immutable root bind-mounts /var/lib/nix onto /nix at boot.
-# The daemon runs as an always-on service (socket activation is blocked by SELinux on immutable roots).
-gamemoderun %command%           # per-game: GameMode CPU/I-O priority (Steam launch option)
-MANGOHUD=1 %command%            # per-game: enable the Mangohud overlay
+```
+./download-iso.sh floatfin stable
 ```
 
-## Verify & build locally
+where `$IMAGE_NAME` is `floatfin` and `$TAG_NAME` corresponds to `stable`, `gts`, or `latest` (the script defaults to `floatfin:gts` if you omit both).
 
-```bash
+## Live ISO Images
+
+Like [Bluefin](https://projectbluefin.io) and [Bazzite](https://bazzite.gg), live desktop ISOs are built using [Titanoboa](https://github.com/ublue-os/titanoboa). Trigger the **"Build Live ISOs"** GitHub Actions workflow ([Actions → Build Live ISOs](https://github.com/floatingskies/floatfin/actions/workflows/build-iso.yml)) and download the artifact:
+
+-   `floatfin-stable-live-amd64.iso` — live Bluefin desktop with the installed image inside
+
+Boot the ISO and you get the full desktop running live from the image. To install the image to disk, launch **"Install to Disk"** from the desktop (Anaconda). The installer will also offer to enroll the Universal Blue secure boot key (password: `universalblue`) so it can boot with Secure Boot; it also works fine without Secure Boot, or you can enroll your own keys later.
+
+## Verification
+
+These images are signed with [Sigstore](https://www.sigstore.dev/)'s [cosign](https://github.com/sigstore/cosign). You can verify the signature by downloading the `cosign.pub` file from this repo and running the following command:
+
+```
 cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:gts
-./build-image.sh [recipe]       # recipes live in recipes/ (floatfin-{latest,stable,gts}.yml, floatite.yml, floatfin-silverblue{-gts}.yml)
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:stable
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:latest
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatite:latest
+```
+
+## Building Locally
+
+```
+./build-image.sh [recipe file]
 ```

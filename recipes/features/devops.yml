@@ -2,19 +2,15 @@
 # Dev-ops / sysadmin / web-dev / Linux-enthusiast CLI toolkit. Everything here
 # is available in the stock Fedora repos, so the image keeps working across
 # repo and Fedora version bumps with no third-party repos to babysit.
-# `skip-unavailable` keeps the multi-channel builds (gts/stable/latest span
-# several Fedora releases) from failing if one tool isn't packaged yet.
 modules:
   - type: dnf
     install:
-      skip-unavailable: true
       packages:
         # dev-ops & automation
         - ansible-core
         - gh
         - git-lfs
         - jq
-        - yq
         - shellcheck
         - sshpass
         # sysadmin / diagnostics
@@ -22,46 +18,23 @@ modules:
         - htop
         - iotop
         - iperf3
-        - lsof
         - mtr
         - ncdu
         - net-tools
-        - nmap
-        - psmisc
-        - strace
         - sysstat
-        - tcpdump
         - tmux
         - tree
         - whois
         - wget
-        # system health / storage
-        - smartmontools
         # terminal-power-user essentials
-        - bat
         - btop
         - chafa
-        - duf
-        - eza
+        - ImageMagick-libs
         - fd-find
         - fzf
-        - ImageMagick-libs
         - pv
         - ripgrep
-        # file transfer / archives
-        - rsync
-        - zip
-        - unzip
-        - p7zip
-        # containers (dnf/OCI toolchain)
-        - buildah
-        - skopeo
-        - podman-compose
-        # distrobox: one terminal command drops you into a full distro
-        # container that shares your home. The friendly path to Linux distros.
-        - distrobox
         # web development
         - nodejs
         - npm
         - python3-pip
-        - util-linux-user

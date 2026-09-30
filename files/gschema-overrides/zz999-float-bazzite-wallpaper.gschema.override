@@ -1,6 +1,6 @@
-# Default wallpaper: the tower-at-night from the built-in floatfin collection
+# Default wallpaper: fox.jpg from the floating-skies collection
 
 [org.gnome.desktop.background]
-picture-uri='file:///usr/share/backgrounds/floatfin/tower-of-firewatch.jpg'
-picture-uri-dark='file:///usr/share/backgrounds/floatfin/tower-of-firewatch.jpg'
+picture-uri='file:///usr/share/backgrounds/floating-skies/slawek-fedorczuk-slawek-fedorczuk-artstation-landscapeb.jpg'
+picture-uri-dark='file:///usr/share/backgrounds/floating-skies/slawek-fedorczuk-slawek-fedorczuk-artstation-landscapeb.jpg'
 picture-options='zoom'
