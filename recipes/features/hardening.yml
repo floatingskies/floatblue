@@ -31,12 +31,6 @@ modules:
   - type: dnf
     install:
       packages:
-        # A safe allocator for every dynamically linked process, including
-        # Flatpak (via /etc/ld.so.preload). `with-standard-malloc COMMAND`
-        # runs anything with the stock glibc allocator instead, for the cases
-        # where the overhead matters.
-        - hardened_malloc
-        # Authenticated time (NTS) so the clock cannot be pushed around.
         - chrony
         # USB device authorisation, installed and usable but not enforcing by
         # default: a policy that blocks an unknown keyboard at boot is a much
@@ -68,10 +62,8 @@ modules:
         - bluetooth.service
 
 
-  # Applies the parts that need a running system manager: default firewall
-  # zone, MAC randomization on already-saved Wi-Fi profiles, and a hard check
-  # that the hardened_malloc preload target exists (a dangling
-  # /etc/ld.so.preload line stops every dynamically linked process starting).
+  # Applies the parts that need a running system manager: the default firewall
+  # zone, and MAC randomization on already-saved Wi-Fi profiles.
   - type: script
     scripts:
       - apply-hardening.sh

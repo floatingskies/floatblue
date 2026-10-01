@@ -2,7 +2,7 @@
 
 A personal choice distro made by Float.
 
-A group of [Bootable Container](https://containers.github.io/bootable/) images built on top of [Bluefin DX](https://projectbluefin.io). [Bazzite](https://bazzite.gg) (GNOME) with [BlueBuild](https://blue-build.org)s tools. All the following is added to the image during the build time as a layer over the Universal Blue base.
+A [Bootable Container](https://containers.github.io/bootable/) image built on top of [Bluefin DX](https://projectbluefin.io) with [BlueBuild](https://blue-build.org)s tools. All the following is added to the image during the build time as a layer over the Universal Blue base.
 
 The desktop layout is left stock GNOME: no Dash to Dock, no accent icons, no
 window-button reshuffling, no interface settings on top of what the base image
@@ -44,10 +44,9 @@ Customizations added to the image:
 -   **Secureblue-style hardening, adapted** (see
     [recipes/features/hardening.yml](recipes/features/hardening.yml) for the full
     list of what was left out and why): kernel/network sysctl hardening,
-    `hardened_malloc` preloaded system-wide (with `with-standard-malloc COMMAND`
-    as an escape hatch), core dumps disabled, account lockout and password
-    quality via the stock `pam_faillock`/`pam_pwquality`, per-network Wi-Fi MAC
-    randomization, NTS-authenticated time, a desktop firewalld zone, and
+    core dumps disabled, account lockout and password quality via the stock
+    `pam_faillock`/`pam_pwquality`, per-network Wi-Fi MAC randomization,
+    NTS-authenticated time, a desktop firewalld zone, and
     `geoclue`/`passim`/`cups`/`bluetooth` off. It stops short of removing
     `sudo`/`su`/`pkexec`, disabling Xwayland, blocking `ping`, or restricting
     `containers/policy.json`, because this image ships Steam, a network toolset,
@@ -56,9 +55,10 @@ Customizations added to the image:
 -   **Homebrew** via `ublue-brew`, with the setup service and weekly
     update/upgrade timers enabled.
 
--   **Default Flatpaks** installed at first boot from `/etc/flatpak/install`
-    (edit that file to change them; nothing is baked in, so they update without
-    rebasing): Flatseal, VLC, Extension Manager, Bitwarden, KDE Connect, Inkscape.
+-   **No Flatpaks are pushed on you.** Flatpak and the Flathub remote are there
+    and working, but the image installs no apps of its own: what you get is
+    Fedora 44's RPM set plus the RPMs listed here. Install Flatpaks yourself
+    whenever you want them.
 
 -   **Network and light security tooling**, all from stock Fedora repos: `nmap`
     `masscan` `arp-scan` `tcpdump` `wireshark-cli` `termshark` `traceroute` `mtr`
@@ -74,9 +74,9 @@ Customizations added to the image:
 
 -   [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html) as the font (the document font stays Adwaita Sans)
 
--   Steam installed on the Bluefin images from negativo17 (Bazzite already has it)
+-   Steam installed from negativo17
 
--   The OS tells itself as *Floatblue* (Bluefin-based images) and *Floatite* (Bazzite-based images). Settings → About, installer branding, hostname
+-   The OS tells itself as *Floatblue*. Settings → About, installer branding, hostname
 
 -   Bluefins *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a system summary with the Floatblue ASCII logo and a **Floatblue** title
 
@@ -96,7 +96,6 @@ Bluefins default Flatpaks still install on login; no extra Flatpaks are added to
 
 -   `ghcr.io/floatingskies/floatblue:latest` -- Bluefins latest stream, updated daily
 
--   `ghcr.io/floatingskies/floatite:latest` -- Bazzite (GNOME) DX, updated daily
 
 ## Installation
 
@@ -132,7 +131,7 @@ where `$IMAGE_NAME` is `floatblue` and `$TAG_NAME` is `stable` `gts` or `latest`
 
 ## Live ISO Images
 
-Like [Bluefin](https://projectbluefin.io) and [Bazzite](https://bazzite.gg) live desktop ISOs are made using [Titanoboa](https://github.com/ublue-os/titanoboa). Start the **"Build ISOs"** GitHub Actions workflow ([Actions → Build Live ISOs](https://github.com/floatingskies/floatblue/actions/workflows/build-iso.yml)) and download the artifact:
+Like [Bluefin](https://projectbluefin.io) live desktop ISOs are made using [Titanoboa](https://github.com/ublue-os/titanoboa). Start the **"Build ISOs"** GitHub Actions workflow ([Actions → Build Live ISOs](https://github.com/floatingskies/floatblue/actions/workflows/build-iso.yml)) and download the artifact:
 
 -   `floatblue-stable-live-amd64.iso`. Live Bluefin desktop with the installed image inside
 
@@ -150,7 +149,6 @@ cosign verify --key cosign.pub ghcr.io/floatingskies/floatblue:stable
 
 cosign verify --key cosign.pub ghcr.io/floatingskies/floatblue:latest
 
-cosign verify --key cosign.pub ghcr.io/floatingskies/floatite:latest
 
 ```
 

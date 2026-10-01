@@ -21,7 +21,7 @@ if ! sudo podman run --rm --privileged --volume ./output:/build-container-instal
  ghcr.io/jasonn3/build-container-installer:latest IMAGE_REPO=ghcr.io/floatingskies \
  IMAGE_NAME=$IMAGE_NAME \
  IMAGE_TAG=$IMAGE_TAG \
- VARIANT=Silverblue ; then
+ VARIANT=bluefin ; then
     echo "Failed to download image"
     exit 1
 fi 

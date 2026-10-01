@@ -23,7 +23,7 @@ modules:
         # packet capture and inspection
         - tcpdump
         - wireshark-cli
-        - termshark
+
         # scanning
         - nmap
         - arp-scan
@@ -38,7 +38,7 @@ modules:
         - iputils
         # TLS inspection
         - openssl
-        - gnutls-cli
+        - gnutls-utils
         # host exposure review and log auditing
         - lynis
         - audit
@@ -46,4 +46,4 @@ modules:
         # DNS detail
         - bind-utils
         # password strength auditing (pairs with the shipped pam_pwquality)
-        - libpwquality-tools
+        - libpwquality

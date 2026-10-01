@@ -71,15 +71,3 @@ done
 if ((${#profiles[@]} == 0)); then
     echo "MAC randomization: no saved Wi-Fi profiles yet, default in conf.d is enough"
 fi
-
-# ------------------------------------------------------- hardened_malloc ---
-# Confirm the preload target actually exists. /etc/ld.so.preload pointing at a
-# missing library makes every dynamically linked process fail to start, so it
-# is much better to know at build time.
-if [[ -e /usr/lib64/libhardened_malloc.so ]]; then
-    echo "hardened_malloc: preload target present, with-standard-malloc available"
-else
-    echo "warning: /usr/lib64/libhardened_malloc.so is missing but /etc/ld.so.preload references it" >&2
-    echo "warning: remove that line, or the image will not boot" >&2
-    exit 1
-fi

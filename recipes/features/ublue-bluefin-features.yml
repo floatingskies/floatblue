@@ -12,5 +12,5 @@ modules:
   - from-file: features/networking.yml
   - from-file: features/codecs.yml
   - from-file: features/brew.yml
-  - from-file: features/flatpaks.yml
+  - from-file: features/flatpak.yml
   - from-file: features/ublue-bluefin-overrides.yml

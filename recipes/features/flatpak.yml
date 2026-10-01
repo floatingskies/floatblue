@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Flatpak stays available and Flathub stays configured — the image just does
+# not push any apps on anyone.
+#
+# There is no default Flatpak list and no first-boot installer any more. What a
+# machine ends up with is Fedora 44's own RPM set plus the RPMs the other
+# feature files install, which is also why nothing here needs a network at
+# build time.
+#
+# The service exists because a system-wide remote lives under /var, and
+# `bootc switch` resets /var — a remote added during the build would not
+# survive the first rebase. See files/system/usr/bin/float-ensure-flathub.
+modules:
+  - type: systemd
+    system:
+      enabled:
+        - float-flatpak-remote.service

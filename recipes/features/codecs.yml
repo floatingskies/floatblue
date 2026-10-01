@@ -17,7 +17,6 @@ modules:
       nonfree: negativo17
     install:
       packages:
-        - ffmpeg
         - ffmpegthumbnailer
         - mediainfo
         - gstreamer1-libav
@@ -39,8 +38,6 @@ modules:
             new: libavformat
           - old: libavutil-free
             new: libavutil
-          - old: libpostproc-free
-            new: libpostproc
           - old: libswresample-free
             new: libswresample
           - old: libswscale-free

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>floatblue — a homegrown Fedora Atomic desktop</title>
-  <meta name="description" content="A small Fedora Atomic desktop I actually use every day: Silverblue, Bluefin and Bazzite images with the stock GNOME desktop, extra fonts, tools and a live installer. Snapshot ISOs come out by hand, once a month.">
+  <meta name="description" content="A small Fedora Atomic desktop I actually use every day: Bluefin images with the stock GNOME desktop, extra fonts, tools and a live installer. Snapshot ISOs come out by hand, once a month.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#bfeef7">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M22.7 5.1C13.8 6.9 7.8 14.3 6.9 22.4c-.2 1.9 1.5 3.4 3.4 3.1 6.4-1 13-5.8 15.6-13.5.9-2.6.1-5.4-3.2-6.9z' fill='%2317b2d4'/%3E%3Cpath d='M19.4 18.4c4.5-9.1 8.9-11.4 8.9-11.4s3.6 6.9.7 12.6c-2.2 4.4-7.4 6.6-12 3.6.8-1.6 1.6-3.2 2.4-4.8z' fill='%23ff7d5e' opacity='.8'/%3E%3C/svg%3E">
@@ -47,9 +47,7 @@
       <div class="hero-rule reveal" aria-hidden="true"></div>
       <p class="hero-sub reveal">
         My daily Fedora Atomic desktop, layered on
-        <a href="https://silverblue.fedoraproject.org/" target="_blank" rel="noopener noreferrer">Silverblue</a>,
-        <a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin</a>, or
-        <a href="https://bazzite.gg" target="_blank" rel="noopener noreferrer">Bazzite</a>.
+        <a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin DX</a>.
         It's a side project, not a product — so it just does the small things I actually
         want: comfy fonts, useful tools, and a live installer that works.
       </p>
@@ -71,7 +69,7 @@
         </p>
         <ul class="feature-list reveal">
           <li><strong>Atomic &amp; signed</strong> — immutable images with clean rollbacks, verified with cosign.</li>
-          <li><strong>One GNOME, everywhere</strong> — the same curated desktop on Silverblue, Bluefin, and Bazzite.</li>
+          <li><strong>Stock GNOME</strong> — the layout Bluefin ships, with only the skin changed.</li>
           <li><strong>Stock desktop, on purpose</strong> — no icon themes, no wallpaper packs, no boot splash: the desktop is exactly as the base image ships it.</li>
           <li><strong>Little comforts</strong> — Firefox as the browser, Intel One Mono, Docker rootless, VM tooling.</li>
           <li><strong>Flatpaks curated</strong> — a chosen set of sandboxed apps baked into the image.</li>
@@ -91,18 +89,13 @@
         <h2 class="section-title reveal">Pick your flavour.</h2>
         <div class="editions">
           <article class="edition reveal">
-            <h3 class="edition-name">Floatblue <span class="muted">— Silverblue</span></h3>
-            <p>Fedora Silverblue base. Visual Studio Code, libvirt/Virt-Manager, Bluefin's dev tooling and its terminal shortcut.</p>
+            <h3 class="edition-name">Floatblue <span class="muted">— Bluefin DX</span></h3>
+            <p>Bluefin DX base, with its developer tooling already in place. Flat Remix skin, Tails wallpapers and a hardened base on top.</p>
             <p class="taglist"><span class="tag">gts · Fedora 43 · weekly</span><span class="tag">stable · Fedora 44 · weekly</span><span class="tag">latest · Fedora 44 · daily</span></p>
           </article>
           <article class="edition edition-highlight reveal">
             <h3 class="edition-name">Floatblue <span class="muted">— Bluefin DX</span></h3>
             <p>Based on Bluefin's developer image, dev tools included. Starship turned off by default, rootless Docker, a thoughtful Flatpak set. This one is my daily driver.</p>
-            <p class="taglist"><span class="tag">latest · daily</span></p>
-          </article>
-          <article class="edition reveal">
-            <h3 class="edition-name">Floatite <span class="muted">— Bazzite DX</span></h3>
-            <p>Built on Bazzite DX GNOME: the same polished shell with developer mode enabled, and Steam no longer autostarts on login.</p>
             <p class="taglist"><span class="tag">latest · daily</span></p>
           </article>
         </div>
@@ -123,9 +116,8 @@
         </p>
 
         <ul class="feature-list release-list reveal">
-          <li><strong>Floatblue (Silverblue)</strong> — <code>floatblue-stable-live-amd64.iso</code></li>
-          <li><strong>Floatblue</strong> — <code>floatblue-latest-live-amd64.iso</code></li>
-          <li><strong>Floatite</strong> — <code>floatite-latest-live-amd64.iso</code></li>
+          <li><strong>Floatblue (stable)</strong> — <code>floatblue-stable-live-amd64.iso</code></li>
+          <li><strong>Floatblue (latest)</strong> — <code>floatblue-latest-live-amd64.iso</code></li>
         </ul>
 
         <p class="center reveal">

@@ -12,6 +12,11 @@
 modules:
   - type: dnf
     install:
+      # libadwaita and adwaita-cursor-theme are already in the base image; they
+      # are listed so a future base that drops them still gets them back.
+      # skip-unavailable keeps that from turning into a build failure when a
+      # package is already satisfied or disappears in a Fedora bump.
+      skip-unavailable: true
       packages:
         # libadwaita so GTK4 applications actually get the libadwaita skin
         # Flat Remix ships; without it those apps have nothing to theme.
@@ -20,7 +25,9 @@ modules:
         - adwaita-cursor-theme
         # Adwaita itself: it is the fallback if the Flat Remix files ever go
         # missing, so a broken theme degrades instead of leaving widgets bare.
-        - gnome-themes
+        # (The package is adwaita-icon-theme — there is no "gnome-themes" in
+        # Fedora, that name is from Ubuntu.)
+        - adwaita-icon-theme
 
   # A GNOME Shell theme is ignored unless the User Themes extension is
   # installed. The module resolves the version that matches the GNOME in the
