@@ -68,8 +68,16 @@ This is the part worth reading if you are copying any of this.
 * **The dock stays, the blur does not.** Dash to Dock and AppIndicator come from
   the Bluefin base and I kept them, they are how you actually use the machine.
   Blur My Shell is disabled through the system dconf database, because a shell
-  theme over a blurred panel just looks broken. Only User Themes is added on
-  top, since a shell theme does nothing without it
+  theme over a blurred panel just looks broken
+* **User Themes goes into the system extension list, not the user one.** This one
+  cost me a while. `float-theme-sync` runs after the session starts, and by then
+  gnome-shell has already read its extension list, so an extension enabled there
+  is not picked up until the shell restarts. That is why the shell theme only
+  showed up on the second login. `enable-user-theme-systemwide.sh` writes the key
+  into the system dconf database instead, where it is read at shell startup. It
+  merges rather than replaces: the list is read back out of the base image and
+  user-theme is appended, so the dock and AppIndicator survive, and if it cannot
+  parse what it found it fails the build instead of guessing
 * **One more script, `apply-desktop-dconf.sh`.** Dropping a file into
   `/etc/dconf/db/distro.d` does nothing on its own, the profile under
   `/etc/dconf/profile/user` is only written by an explicit `dconf update`. That

@@ -207,7 +207,9 @@ apply() {
     # when the schema is the thing that is missing.
     ensure_user_theme_enabled
 
-    if gsettings list-schemas 2>/dev/null | grep -qx "$SHELL_SCHEMA"; then
+    if [[ ! -d $THEMES_DIR/$shell ]]; then
+        log "shell theme missing at $THEMES_DIR/$shell, leaving the shell alone"
+    elif gsettings list-schemas 2>/dev/null | grep -qx "$SHELL_SCHEMA"; then
         gsettings set "$SHELL_SCHEMA" name "$shell"
     else
         log "user-theme schema not available yet, shell theme will apply next login"
