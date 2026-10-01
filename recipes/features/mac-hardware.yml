@@ -1,0 +1,66 @@
+# Hardware support for Intel Macs that macOS has finished with.
+#
+# This is a Silverblue base on purpose. The Bluefin DX base is tuned around a
+# stack that assumes a desktop GPU and a network stack this hardware does not
+# want, and Silverblue is the same Fedora underneath with none of that.
+#
+# What is here and why:
+#
+#   broadcom-wl + akmod-wl   BCM43xx WiFi, which is what the Airs and Pros from
+#                            roughly 2006 to 2015 have. RPM Fusion nonfree is the
+#                            only place this ships.
+#   v4l2loopback             a virtual webcam, because the built-in iSight is a
+#                            dead end. See the note at the bottom, it matters.
+#   t2fan                    fan control on the T2 Macs, which run hot with no
+#                            fan curve at all otherwise.
+#   smc-tools                battery and fan readings over the SMC, which on a
+#                            Mac is where the hardware keeps them.
+#   bluez                    Bluetooth, which on a Mac is an internal Broadcom
+#                            device rather than a USB dongle.
+#
+# Deliberately NOT here: any COPR. The FaceTime HD kmod only exists as a COPR or
+# prebaked in the ublue akmods container, and a COPR repo file needs a numeric
+# project id that changes without notice. Guessing one is how a repo file ends up
+# pointing nowhere and nobody finds out until boot. So the camera gets a real
+# working webcam through v4l2loopback instead, which is better than a camera that
+# shows a kernel error.
+
+modules:
+  - type: dnf
+    repos:
+      files:
+        - rpmfusion-free.repo
+        - rpmfusion-nonfree.repo
+    install:
+      packages:
+        - broadcom-wl
+        - akmod-wl
+        - akmods
+        - v4l2loopback
+        - bluez
+        - smc-tools
+        - t2fan
+
+  - type: dnf
+    repos:
+      files:
+        - rpmfusion-free.repo
+        - rpmfusion-nonfree.repo
+    install:
+      skip-unavailable: true
+      packages:
+        # present on RPM Fusion free rather than Fedora, and the fallback for
+        # every codec an old Mac struggles with
+        - ffmpeg
+        - libavcodec
+        - gstreamer1-libav
+
+  - type: script
+    scripts:
+      - apply-mac-camera.sh
+      - apply-mac-hardware.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - bluetooth.service

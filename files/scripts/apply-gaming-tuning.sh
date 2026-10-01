@@ -43,8 +43,14 @@ echo "GameMode:"
 command -v gamemoderun >/dev/null 2>&1 && ok "gamemoderun" "$(command -v gamemoderun)" \
     || bad "gamemoderun" "missing, on demand tuning will not happen"
 [[ -f /etc/gamemode.ini ]] && ok "/etc/gamemode.ini" "present" || bad "/etc/gamemode.ini" "missing"
-[[ -e /usr/lib/systemd/system/gamemoded.service ]] && ok "gamemoded.service" "unit present" \
-    || bad "gamemoded.service" "not installed"
+# gamemoded is D-Bus activated and has no unit to enable, so its absence is not
+# a problem. What matters is that the client can talk to a daemon, which cannot
+# be known until there is a session, so only the client binary is required here.
+if [[ -e /usr/lib/systemd/system/gamemoded.service || -e /usr/lib/systemd/system/gamemoded.socket ]]; then
+    ok "gamemoded" "unit present, D-Bus activation also works"
+else
+    ok "gamemoded" "no unit, which is normal, it is D-Bus activated"
+fi
 
 # Steam must not open by itself. It costs memory and a network handshake on
 # every login, and the autostart entry comes back with some Steam updates.

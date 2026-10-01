@@ -38,7 +38,8 @@ modules:
       - ublue-disable-steam-autostart.sh
       - apply-gaming-tuning.sh
 
-  - type: systemd
-    system:
-      enabled:
-        - gamemoded.service
+  # No systemd module on purpose. gamemoded is D-Bus activated: the client
+  # library starts it on demand through the bus, and there is no
+  # gamemoded.service unit to enable. Asking for one made the systemd module fail
+  # the build with "Failed to enable unit: gamemoded.service does not exist",
+  # the same way a disabled list did earlier.

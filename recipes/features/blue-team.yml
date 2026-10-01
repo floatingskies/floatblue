@@ -17,6 +17,15 @@
 #   ordering hazard worth avoiding.
 
 modules:
+  # auditd is enabled at the bottom of this file, and bluebuild's systemd module
+  # fails the build on a unit it cannot find, so the package that ships it is
+  # installed here. It also lives in networking.yml, but that runs later in the
+  # build order, which is too late.
+  - type: dnf
+    install:
+      packages:
+        - audit
+
   - type: dnf
     install:
       skip-unavailable: true

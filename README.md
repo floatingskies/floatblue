@@ -279,6 +279,59 @@ From Bluefin DX you already have VS Code, Docker and Podman, the app indicator
 menu and Ctrl+Alt+T. Rootful Docker and Starship are off and Tailscale does
 not start on its own.
 
+## The Mac image
+
+There is a second image for Intel Macs that macOS has finished with, built on
+**Silverblue** rather than Bluefin DX. Same Fedora underneath, without a desktop
+stack tuned for a discrete GPU and a network configuration this hardware does not
+want. Everything else is the same: the branding, the Flat Remix theme, the
+wallpapers, the profiles, the hardening. It comes out of its own
+`floatblue-mac.yml` recipe and its own workflows, `build-image-mac.yml` and
+`build-iso-mac.yml`.
+
+It is tagged `stable-mac` and `mac`, deliberately not `stable`. The tag is what
+bluebuild pushes, so reusing the desktop channel's name would mean whichever
+build finished last would overwrite the other, for both machines.
+
+### WiFi
+
+BCM43xx, which is what the Airs and Pros from roughly 2006 to 2015 have. That is
+`broadcom-wl` plus `akmod-wl` from RPM Fusion nonfree, and it needs the `akmods`
+package to rebuild for a new kernel. The practical consequence is worth stating
+plainly: **after a kernel update the WiFi is gone until `akmods` finishes
+building the module**, which on an Atomic image happens at boot. That is how the
+driver is packaged, not something this image can fix. `apply-mac-hardware.sh`
+fails the build if `broadcom-wl`, `akmod-wl` or `akmods` is missing, and reports
+rather than fails on the module itself, which cannot exist before boot.
+
+Apple Silicon is not supported and cannot be. Those Macs have no Broadcom radio,
+so there is nothing for any of this to drive.
+
+### The camera, honestly
+
+The built-in iSight is a Broadcom BCM20300 on USB. Apple wrote a driver for it,
+never upstreamed it, and the out of tree version stopped building years ago.
+**There is no camera driver for that hardware on a current Fedora.** The FaceTime
+HD camera, the separate one that plugs in and appears as a Broadcom 1570 on PCIe,
+does have a driver, but only as a COPR or prebaked in the ublue akmods
+container. A COPR repo file needs a numeric project id that changes without
+notice, and a repo file pointing at nothing is a problem you only find at boot,
+so it is not installed here.
+
+What is installed instead is `v4l2loopback`, which gives a real virtual webcam
+that FaceTime, Meet and Zoom will open. It shows a test pattern, on purpose: a
+black rectangle would read as a broken camera, and this is not a picture of you.
+`apply-mac-camera.sh` also reports which Broadcom camera it found, so you know
+what you are dealing with before you boot.
+
+### The rest
+
+`t2fan` for fan control on the T2 Macs, which run hot with no fan curve at all.
+`smc-tools` for battery and fan readings, which on a Mac is where the hardware
+keeps them. `bluez` for Bluetooth, which is an internal Broadcom device rather
+than a USB dongle. RPM Fusion is enabled for both free and nonfree, with the keys
+fetched the way RPM Fusion publishes them.
+
 ## Image Tags
 
 `floatblue` is an overlay on [Bluefin DX](https://docs.projectbluefin.io/administration#upgrades-and-throttle-settings) following Bluefins image channels:

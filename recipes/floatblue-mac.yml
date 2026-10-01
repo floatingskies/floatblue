@@ -1,0 +1,22 @@
+name: floatblue
+description: Bluefin's GNOME on a Silverblue base, with the Broadcom WiFi and the rest that Intel Macs need, for the ones macOS has finished with.
+# The tag has to be its own. image-version is what bluebuild pushes, so reusing
+# "stable" here would overwrite the tag the desktop stable channel publishes and
+# whichever build finished last would win for both machines. The desktop side
+# owns stable, gts and latest; this owns stable-mac and mac.
+alt-tags:
+  - mac
+
+# Silverblue, not Bluefin DX. Same Fedora underneath, without a desktop stack
+# tuned for a discrete GPU and a network configuration this hardware does not
+# want. Everything we added is layered on top through the shared feature list, so
+# the branding, the theme, the wallpapers and the profiles are identical.
+base-image: ghcr.io/ublue-os/silverblue-main
+image-version: stable-mac
+
+modules:
+  - from-file: features/ublue-bluefin-features.yml
+  - from-file: features/mac-hardware.yml
+  - type: gschema-overrides  # Intel One Mono, same as the desktop channels
+    include:
+      - zz42-float.gschema.override

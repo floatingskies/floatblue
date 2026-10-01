@@ -1,0 +1,208 @@
+name: Build Mac Live ISO
+
+on:
+  workflow_dispatch:
+
+env:
+  REPO_OWNER: ${{ github.repository_owner }}
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-iso-mac
+  cancel-in-progress: true
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      fedora: ${{ steps.fedora.outputs.version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: floatblue-mac
+            tag: stable-mac
+            label: Floatblue-Mac-Live
+    steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        with:
+          tool-cache: true
+
+      - name: Mount Container Storage BTRFS Loopback
+        run: |
+          sudo truncate -s 110G /mnt/podman-storage.img
+          sudo mkfs.btrfs -f -m single -d single /mnt/podman-storage.img
+          sudo podman system reset --force
+          sudo systemctl stop podman.service
+          LOOP=$(sudo losetup --find --show --direct-io=on /mnt/podman-storage.img)
+          sudo mkdir -p /mnt/podman-storage
+          sudo mount -o compress-force=zstd:2,discard=async,noatime "$LOOP" /mnt/podman-storage
+          sudo mkdir -p /mnt/podman-storage/storage /mnt/podman-storage/tmp
+          sudo mount --bind /mnt/podman-storage/storage /var/lib/containers/storage
+          sudo systemctl start podman.service
+
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Resolve image references
+        id: repo_owner_case
+        run: |
+          lower=${REPO_OWNER,,}
+          {
+            echo "lowercase=$lower"
+            echo "image=ghcr.io/$lower/${{ matrix.name }}:${{ matrix.tag }}"
+            echo "cache=ghcr.io/$lower/floatblue-iso-cache-${{ matrix.name }}"
+          } >>"$GITHUB_OUTPUT"
+
+      - name: Build Container Image
+        run: |
+          IMAGE="${{ steps.repo_owner_case.outputs.image }}"
+          CACHE_REPO="${{ steps.repo_owner_case.outputs.cache }}"
+          echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
+          sudo env TMPDIR=/mnt/podman-storage/tmp podman build \
+            --cap-add sys_admin \
+            --security-opt label=disable \
+            --cache-from "$CACHE_REPO" \
+            --cache-to "$CACHE_REPO" \
+            --build-arg BASE_IMAGE="$IMAGE" \
+            --build-arg INSTALL_IMAGE_PAYLOAD="$IMAGE" \
+            --build-arg ISO_LABEL="${{ matrix.label }}" \
+            -t localhost/payload:latest installer/
+
+      - name: Show disk space
+        if: always()
+        run: |
+          sudo df -h
+          sudo du -sh /mnt/podman-storage.img
+
+      - name: Detect Fedora Version
+        id: fedora
+        run: |
+          # The release is versioned after the Fedora it is built from, so the
+          # number has to come out of the image and not out of this repository.
+          for img in localhost/payload:latest "${{ steps.repo_owner_case.outputs.image }}"; do
+            rel=$(sudo podman run --rm --security-opt label=disable \
+                    "$img" cat /etc/fedora-release 2>/dev/null) && {
+              ver=$(sed -n 's/.*release *\([0-9][0-9]*\).*/\1/p' <<<"$rel" | head -1)
+              if [[ -n $ver ]]; then
+                echo "  Fedora $ver (from $img: $rel)"
+                echo "version=$ver" >>"$GITHUB_OUTPUT"
+                exit 0
+              fi
+            }
+          done
+          echo "error: could not read /etc/fedora-release from the built image" >&2
+          exit 1
+
+      - name: Build ISOs
+        uses: Zeglius/titanoboa@7737f4748458252ac827dca14b3d6dd09298472a
+        id: build
+        with:
+          image-ref: localhost/payload:latest
+          iso-dest: ${{ matrix.name }}-f${{ steps.fedora.outputs.version }}-live-amd64.iso
+
+      - name: Move ISOs to Upload Directory
+        id: upload-directory
+        shell: bash
+        run: |
+          ISO_UPLOAD_DIR=${{ github.workspace }}/upload
+          ISO_PATH=${{ steps.build.outputs.iso-dest }}
+          ISO_NAME=$(basename ${ISO_PATH})
+
+          mkdir -p ${ISO_UPLOAD_DIR}
+          mv ${ISO_PATH} ${ISO_UPLOAD_DIR}
+          (cd ${ISO_UPLOAD_DIR} && sha256sum ${ISO_NAME} | tee ${ISO_NAME}-CHECKSUM)
+          echo "iso-upload-dir=${ISO_UPLOAD_DIR}" >> $GITHUB_OUTPUT
+
+      - name: Upload ISOs and Checksum to Job Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-${{ matrix.tag }}-live
+          path: ${{ github.workspace }}/upload
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          overwrite: true
+
+  publish-release:
+    name: Publish Mac ISO Release
+    runs-on: ubuntu-latest
+    needs: build-iso
+    permissions:
+      contents: write
+    env:
+      FEDORA: ${{ needs.build-iso.outputs.fedora }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download ISO Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: isos
+          merge-multiple: true
+
+      - name: Generate Release Body
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO="${{ github.repository }}"
+
+          # Same reasoning as the desktop ISO: only compare against a tag that
+          # really exists, and let the compare fail without taking the step down.
+          # A Mac release is tagged iso-mac-f<f> rather than iso-f<f>, so the
+          # two flavours never read each other's history.
+          PREV=$(git tag --list 'iso-mac-f*' --sort=-v:refname | head -1 || true)
+          SINCE=""
+          CHANGES=""
+          if [[ -n $PREV ]] \
+             && CHANGES=$(gh api "repos/$REPO/compare/$PREV...${{ github.sha }}" \
+                  --jq '.commits[] | "- " + (.commit.message | split("\n")[0])' 2>/dev/null); then
+            SINCE=$PREV
+          else
+            CHANGES="- First Mac ISO release for Fedora ${FEDORA}."
+          fi
+
+          {
+            echo "Live ISO for **Intel Macs**, built automatically from the \`main\` branch, based on **Fedora ${FEDORA}**."
+            echo
+            echo "Read this before you write it to a disk."
+            echo
+            echo "- **Broadcom WiFi.** \`broadcom-wl\` and \`akmod-wl\` from RPM Fusion. The module is built by \`akmods\` on first boot, so the first boot after an update has no network until it finishes."
+            echo "- **Apple Silicon is not supported.** These Macs have no Broadcom radio at all. Use the desktop image."
+            echo "- **The camera will not show you.** There is no driver for the built-in iSight, and none packaged for the FaceTime HD. A virtual webcam is provided so FaceTime, Meet and Zoom open and show a test pattern. It is not a picture of you."
+            echo "- **Secure Boot** works via the Universal Blue enrollment key."
+            echo
+            echo "## What changed since ${SINCE:-the first release}"
+            echo "$CHANGES"
+            echo
+            echo "## Verify the download"
+            echo '```'
+            cat isos/*-CHECKSUM
+            echo '```'
+          } >release-body.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish / Update Mac ISO Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: iso-mac-f${{ needs.build-iso.outputs.fedora }}
+          target_commitish: ${{ github.sha }}
+          name: Float Mac Live ISO (Fedora ${{ needs.build-iso.outputs.fedora }})
+          draft: false
+          make_latest: "false"
+          fail_on_unmatched_files: true
+          body_path: release-body.md
+          files: |
+            isos/*.iso
+            isos/*-CHECKSUM

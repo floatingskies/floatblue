@@ -1,0 +1,6 @@
+[rpmfusion-nonfree]
+name=rpmfusion-nonfree
+metalink=https://mirrors.rpmfusion.org/nonfree/fedora/releases/$releasever/Everything/$basearch/os/repodata/repomd.xml
+enabled=1
+gpgcheck=1
+gpgkey=https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-nonfree-fedora-$releasever
