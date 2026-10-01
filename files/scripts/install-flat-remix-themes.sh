@@ -26,16 +26,18 @@ ICONS_DIR=/usr/share/icons
 
 mkdir -p "$CACHE" "$THEMES_DIR" "$ICONS_DIR"
 
+# Prints the tarball path on stdout and nothing else: the caller captures this
+# with $(...), so any progress message here would end up inside the path.
 fetch() {
     local repo=$1 ref=$2 tarball="$CACHE/$1-$2.tar.gz"
 
     if [[ ! -s $tarball ]]; then
-        echo "Downloading $repo@${ref:0:12}"
+        echo "Downloading $repo@${ref:0:12}" >&2
         curl -fL --retry 5 --retry-delay 5 --retry-all-errors \
             "https://codeload.github.com/daniruiz/$repo/tar.gz/$ref" \
-            -o "$tarball"
+            -o "$tarball" >&2
     fi
-    echo "$tarball"
+    printf '%s\n' "$tarball"
 }
 
 # Extract <repo tarball> <path inside repo> <destination>

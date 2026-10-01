@@ -1,7 +1,18 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Cockpit, the web admin console, reachable on https://localhost:9090.
+#
+# Handy because this image is meant to be administered over SSH as much as
+# through the desktop: storage, networking, containers, SELinux, OSTree
+# deployments, logs and services all have a UI here.
+#
+# skip-unavailable because these are separate subpackages that come and go
+# between Fedora releases (cockpit-selinux in particular); losing one should
+# not fail the whole image build.
 modules:
   - type: dnf
     install:
+      skip-unavailable: true
       packages:
         - cockpit-machines
         - cockpit-networkmanager
