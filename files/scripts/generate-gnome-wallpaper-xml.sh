@@ -1,20 +1,4 @@
 #!/usr/bin/bash
-# Registers every image in a wallpaper directory with GNOME's wallpaper
-# picker (Settings -> Appearance).
-#
-# GNOME only lists wallpapers referenced by an XML in
-# /usr/share/gnome-background-properties; bare image files dropped into
-# /usr/share/backgrounds are ignored. Collections shipped flat (as ours are,
-# via the files module) therefore need one generated XML per directory.
-#
-# Usage:
-#   generate-gnome-wallpaper-xml.sh <wallpaper-dir> <xml-name> [display-prefix]
-#   [output-dir]
-#
-#   wallpaper-dir   directory to scan for images (recursive)
-#   xml-name        base name of the generated file, e.g. "tails"
-#   display-prefix  short label shown in front of each entry, e.g. "Tails"
-#   output-dir      where to write the .xml (default: /usr/share/gnome-background-properties)
 
 set -euo pipefail
 
@@ -37,10 +21,6 @@ xml_escape() {
 
 {
     printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>'
-    # No DOCTYPE on purpose: GNOME resolves
-    # /usr/share/backgrounds/gnome/gnome-wp-list.dtd, and this image deletes
-    # /usr/share/backgrounds/gnome along with the Fedora/GNOME wallpapers, so
-    # pointing at a DTD that is no longer on disk would only risk a parse error.
     printf '%s\n' '<wallpapers>'
     while IFS= read -r -d '' image; do
         name="${image##*/}"

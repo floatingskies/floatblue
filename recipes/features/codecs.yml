@@ -1,16 +1,4 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
 
-# Mult codecs from the negativo17 COPR, which this repo already trusts for
-# Steam.
-#
-# Fedora cannot ship these for patent reasons, which leaves H.264/AAC playback
-# and a pile of media containers working only by accident. This replaces the
-# codec set wholesale rather than layering a second one on top, because having
-# both ffmpeg and ffmpeg-free installed is how you end up with a GStreamer
-# registry that resolves the wrong plugin.
-#
-# The `-free` packages already present in the base image are swapped for their
-# full counterparts.
 modules:
   - type: dnf
     repos:
@@ -23,11 +11,6 @@ modules:
         - gstreamer1-plugins-bad
         - gstreamer1-plugins-ugly
     replace:
-      # The repo id is NOT "negativo17": fedora-negativo17.repo defines repos
-      # named fedora-multimedia, fedora-steam, fedora-nvidia and so on, and the
-      # codecs live in fedora-multimedia. The dnf module runs
-      # `dnf swap --repo <this value>`, so a wrong id fails the build with
-      # "No matching repositories for ...".
       - from-repo: fedora-multimedia
         skip-unavailable: true
         packages:

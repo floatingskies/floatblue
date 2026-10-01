@@ -1,6 +1,4 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
 
-# These are the features common to all Silverblue-shaped Floatblue images
 modules:
   - from-file: features/system-files.yml
   - from-file: features/application-rpms.yml

@@ -1,160 +1,150 @@
 [![bluebuild build badge](https://github.com/floatingskies/floatblue/actions/workflows/build-daily.yml/badge.svg)](https://github.com/floatingskies/floatblue/actions/workflows/build-daily.yml)
 
-A personal choice distro made by Float.
 
-A [Bootable Container](https://containers.github.io/bootable/) image built on top of [Bluefin DX](https://projectbluefin.io) with [BlueBuild](https://blue-build.org)s tools. It is layered over the Universal Blue base, and it is chiefly two things: a hardened system that stays usable, and a Unix/BSD-flavoured toolbox.
+My own Fedora Atomic desktop, built on top of [Bluefin DX](https://projectbluefin.io) with [BlueBuild](https://blue-build.org).
+
+It is mostly two things. A system that is locked down but still gets out of my
+way, and a pile of the Unix and BSD tools I keep reaching for and Fedora does
+not ship. Everything else is small.
+
+The desktop itself is stock GNOME. No dock, no accent icons, no window button
+shuffling, nothing like that. Just the skin.
 
 ## Security
 
-The image is hardened by default, adapted from
-[secureblue](https://github.com/secureblue/secureblue) — the closest thing to a
-reference for this — with two deliberate constraints: it has to stay usable
-every day, and it has to stay usable on old hardware, an i5-3550 being the
-stated target.
+I started from [secureblue](https://github.com/secureblue/secureblue), which is
+the best reference for this kind of work, and then took a lot of it back out
+again. Two reasons. I want this to be my daily driver, and I have an i5-3550
+under the desk that I do not want to make slower.
 
-### What is applied
+### What it does
 
--   **Kernel and network hardening** in
-    [60-float-hardening.conf](files/system/usr/lib/sysctl.d/60-float-hardening.conf):
-    anti-spoofing and martian logging, ICMP redirects and source routing off,
-    IPv6 privacy extensions, BPF JIT hardening, no unprivileged BPF, hardened
-    ASLR, no kexec, `io_uring` disabled, userfaultfd restricted to
-    `CAP_SYS_PTRACE`. Every value has its reasoning inline
--   **Core dumps off** across the three places that produce them (limits,
-    systemd system and user, `systemd-coredump`), because a core of a browser
-    can hold session tokens and page contents
--   **Account lockout and password quality** through the stock
-    `pam_faillock` and `pam_pwquality`. The lockout is 10 attempts for 15
-    minutes, not secureblue's 24 hours — a 24-hour lockout triggered by fat
-    fingers on a laptop is not security, it is a support call. No PAM stack is
-    rewritten, deliberately: a botched edit to `/etc/pam.d/*` locks you out of
-    the graphical login and the only way back is a live USB
--   **Per-network Wi-Fi MAC randomisation** — random, then remembered per
-    network, so networks that key on the MAC keep working while a passive
-    observer cannot follow the machine across networks by its hardware address
--   **NTS-authenticated time** ([chrony](files/system/etc/chrony.conf)), so the
-    clock cannot be pushed around. This matters more than it looks: TLS
-    validation, TOTP/2FA and log forensics all trust the clock
--   **A desktop firewall zone** (`FloatWorkstation`) that closes inbound
-    connections while keeping mDNS, printer and device discovery working —
-    secureblue also ships a zone with every port removed, which is right for a
-    server and hostile to a desktop
--   **Privacy services off**: `geoclue` and `passim` masked, `cups`,
-    `cups-browsed` and `bluetooth` disabled rather than masked, so they come
-    back with one command
+* A pile of kernel and network sysctls in
+  [60-float-hardening.conf](files/system/usr/lib/sysctl.d/60-float-hardening.conf).
+  Anti spoofing, martian logging, ICMP redirects and source routing off, IPv6
+  privacy extensions, hardened ASLR, no kexec, io_uring off, and so on
+* Core dumps turned off in all three places that produce them. A core dump of a
+  browser can be full of session tokens and page contents
+* Account lockout and password rules through the stock `pam_faillock` and
+  `pam_pwquality`. Ten tries, fifteen minutes. secureblue uses 24 hours, which
+  on a laptop just means support calls. I do not touch any PAM stack, because
+  breaking `/etc/pam.d/*` locks you out of the login screen and the only way
+  back is a live USB
+* Wi-Fi MAC addresses randomized per network. Random, but remembered, so
+  networks that key on the MAC keep working while nobody can follow the machine
+  around by its hardware address
+* Time over NTS, in [chrony.conf](files/system/etc/chrony.conf), so nobody can
+  shove a bogus clock at the machine. This one matters more than it looks.
+  TLS, 2FA and log forensics all trust the clock
+* A firewall zone of my own. It closes inbound connections but keeps mDNS and
+  device discovery working, because secureblue also ships a zone with every
+  port removed and that is great for a server and miserable for a desktop
+* `geoclue` and `passim` masked, `cups`, `cups-browsed` and `bluetooth` merely
+  disabled so they come back with one command
 
-### What was deliberately left out
+### What I took back out
 
-The more interesting half. Anything can be bolted on; knowing what was rejected
-and why is the part worth reading. All of it is documented inline in
-[hardening.yml](recipes/features/hardening.yml).
+This is the part worth reading if you are copying any of this.
 
--   **`sudo`, `su` and `pkexec` stay.** secureblue replaces them with `run0`,
-    which starts a full systemd user session per call — visibly slow on a Sandy
-    Bridge, and it breaks ordinary scripting. `doas` is installed alongside
-    sudo instead; see below
--   **Xwayland stays on**, because the image ships Steam
--   **`ping` stays on**, because the image ships a network toolset
--   **`perf_event_paranoid` is 2, not 3**, so `perf` still works on your own
-    processes
--   **`rp_filter` is loose, not strict.** Strict mode drops legitimate packets on
-    a laptop that has Wi-Fi, Ethernet and a VPN at the same time, which presents
-    as "the internet randomly doesn't work"
--   **No blanket module blacklisting.** secureblue blocks `squashfs`, which is
-    load-bearing for ostree/bootc and for the live ISO build
--   **No restrictive `containers/policy.json`.** podman and `bootc switch` are
-    how this image installs and updates itself; a policy that rejects unsigned
-    registries breaks both in ways that are miserable to debug
--   **No DNS-over-TLS resolver swap.** Replacing systemd-resolved with a local
-    validating resolver is a real hardening win, and also a common source of
-    "podman cannot resolve anything"
--   **One GNOME extension, not zero.** *User Themes*, because a shell theme is
-    inert without it. No Dash to Dock, no accent icons, nothing that touches
-    the layout
+* **sudo, su and pkexec all stay.** secureblue drops them for `run0`, and
+  `run0` starts a whole systemd session every single time you call it. On a
+  Sandy Bridge you feel that, and it breaks ordinary scripting. I put doas
+  next to sudo instead, which is a real improvement, just not a swap
+* **Xwayland stays on**, the image has Steam
+* **ping stays on**, the image has a network toolset
+* **`perf_event_paranoid` is 2 instead of 3**, so perf still works on my own
+  processes
+* **`rp_filter` is loose, not strict.** Strict drops legitimate packets on a
+  laptop with Wi-Fi, Ethernet and a VPN at once, which shows up as "the
+  internet randomly doesn't work"
+* **No blanket module blacklisting.** secureblue blocks `squashfs` and that
+  one is load bearing for ostree, bootc and the live ISO build
+* **No restrictive `containers/policy.json`.** podman and `bootc switch` are
+  how this image installs and updates itself, and a policy that rejects
+  unsigned registries breaks both in ways that are miserable to debug
+* **I did not swap the resolver.** Running a local validating DNS server is a
+  real hardening win and also a classic way to end up with podman that cannot
+  resolve anything
+* **One GNOME extension, not zero.** User Themes, because a shell theme does
+  nothing without it. No dock, no accent icons, nothing that touches the layout
 
-## doas and the Unix/BSD toolbox
+## doas and the BSD/Unix tools
 
-**`doas` is installed as an option, alongside sudo — not instead of it.** It is
-OpenBSD's privilege escalation and a genuinely smaller attack surface: one
-small setuid binary against sudo's plugin stack. It is not a drop-in
-replacement, though — there is no `sudo -u`, and `doas.conf` is far poorer than
-`sudoers` — and this image is used for administration, where Ansible and
-ordinary scripts assume sudo. So both are installed, and the `wheel` group gets
-`permit persist :wheel`. Note the Fedora package is `opendoas`; the command it
-installs is `doas`.
+doas is OpenBSD's privilege escalation. It is a much smaller attack surface
+than sudo, one small setuid binary instead of a pile of plugins, and I like
+it. But it is not a drop in replacement. There is no `sudo -u`, and doas.conf
+is a lot poorer than sudoers, and I do admin work where Ansible and scripts
+just assume sudo. So both are installed and wheel gets `permit persist :wheel`.
+Note the Fedora package is called `opendoas`, the command is still `doas`.
 
-Alongside it, the BSD and Unix corner of the toolbox, picked for what a sysadmin
-or web developer actually reaches for:
+Then the tools. All of these are in stock Fedora, nothing from a third party
+repo to babysit across releases.
 
--   **Shells** — `ksh` (OpenBSD's shell lineage) and `dash`, a fast POSIX `sh`
-    that is far better than bash for testing script portability
--   **Text tools** — `vis` (BSD's `vi`, reads vi and vim motions), `ed`, `mandoc`
-    (BSD's man formatter), `bc`
--   **Inspection** — `ltrace` next to `strace`, and `lsof` for open files
--   **Sysadmin core** — `rsync`, `gawk`, `mawk`, `parallel`, `bats` for shell
-    test suites, `screen` as a second multiplexer
--   **Build chain** — `m4`, `autoconf`, `automake`, `libtool`, for building from
-    source on an old CPU where the toolchain is already present beats spinning
-    up a container
--   **Network and light security tooling**, all from stock Fedora repos — `nmap`,
-    `masscan`, `arp-scan`, `tcpdump`, `wireshark-cli`, `traceroute`, `mtr`,
-    `iperf3`, `ethtool`, `netcat`, `socat`, `gnutls-utils`, `lynis`, `audit`,
-    `libpwquality`. Password crackers and brute-forcers are deliberately left
-    out
--   **Cockpit** on `https://localhost:9090`, which is the natural companion to
-    all of the above
--   **A dev-ops / web-dev CLI toolkit** — `ansible-core` `gh` `git-lfs` `jq`
-    `shellcheck` `sshpass` `bind-utils` `htop` `iotop` `ncdu` `net-tools`
-    `sysstat` `tmux` `tree` `whois` `wget` `btop` `fd-find` `fzf` `pv`
-    `ripgrep` `nodejs` `npm` `python3-pip`
+* **Shells.** `ksh`, which is OpenBSD's shell lineage, and `dash`, a fast POSIX
+  sh that is much better than bash when you are checking whether a script
+  really is portable
+* **Text.** `vis` is BSD's vi and understands vi and vim motions. `ed`, `mandoc`
+  for man pages, `bc`
+* **Looking at things.** `ltrace` next to strace, `lsof` for open files
+* **The usual suspects.** `rsync`, `gawk`, `mawk`, `parallel`, `bats` for shell
+  test suites, `screen` as a second multiplexer
+* **Building from source.** `m4`, `autoconf`, `automake`, `libtool`. Having the
+  toolchain sitting there beats spinning up a container on this CPU
+* **Network and light security.** `nmap` `masscan` `arp-scan` `tcpdump`
+  `wireshark-cli` `traceroute` `mtr` `iperf3` `ethtool` `netcat` `socat`
+  `gnutls-utils` `lynis` `audit` `libpwquality`. I left the password crackers
+  and the brute forcers out on purpose
+* **Cockpit** on `https://localhost:9090`, which goes with the rest of that
+* **A devops pile.** `ansible-core` `gh` `git-lfs` `jq` `shellcheck` `sshpass`
+  `bind-utils` `htop` `iotop` `ncdu` `net-tools` `sysstat` `tmux` `tree` `whois`
+  `wget` `btop` `fd-find` `fzf` `pv` `ripgrep` `nodejs` `npm` `python3-pip`
 
-What Fedora does not package — `openbsd-inetd`, `netcat-openbsd`, the NetBSD
-`cb-*` tools — is left out because upstream does not ship it, not as an
-oversight.
+Some BSD things Fedora simply does not package, so they are not here:
+`openbsd-inetd`, `netcat-openbsd`, the NetBSD `cb-*` tools. Not an oversight,
+upstream does not ship them.
 
-## RPM only. Nothing is pushed on you
+## No Flatpaks pushed on you
 
-No default Flatpak list, no first-boot app installer, no background service
-downloading apps on login. What a machine gets is Fedora 44's own RPM set plus
-the RPMs listed here. Flatpak and the Flathub remote are present and working —
-`float-flatpak-remote.service` keeps the remote configured at every boot,
-because a system-wide remote lives under `/var` and `bootc switch` resets it —
-but the list is yours to write.
+There is no default Flatpak list, no installer that runs on first boot, no
+background service quietly downloading apps while you log in. What a machine
+ends up with is Fedora 44's own RPM set plus the RPMs listed here.
 
-## Everything else
+Flatpak and Flathub are there and work. `float-flatpak-remote.service` keeps
+the remote configured at every boot, because a system wide remote lives under
+`/var` and `bootc switch` throws `/var` away. The list of apps is yours to
+write.
 
-Details, not differentiators.
+## Smaller stuff
 
--   **Flat Remix** Blue for GTK, libadwaita, the shell and the icons, with the
-    **Adwaita** cursor. GNOME's Settings → Appearance swaps all four together:
-    Flat Remix ships Light and Dark as separate theme directories and its
-    `libadwaita/` has no `gtk-dark.css`, so a per-user service,
-    `float-theme-sync`, watches `color-scheme` and applies all four, covering
-    native GTK3/GTK4 apps and Flatpaks too
--   **The FloatOS logo** under the pixmap filenames the base tooling already
-    looks for, plus both Plymouth spinner watermarks, with the initramfs
-    regenerated so the splash is branded from the first frame
--   **The Tails collection is the only wallpaper**; the Fedora, GNOME and Bluefin
-    ones are removed along with their picker entries, and which Tails image is
-    the first-boot default is decided by `RANDOM` during the build, so every
-    rebuild and rebase lands on a different one
--   **Homebrew** via `ublue-brew`, with the setup service and weekly
-    update/upgrade timers
--   **Multimedia codecs** from the negativo17 COPR (`ffmpeg`,
-    `gstreamer1-libav`, `gstreamer1-plugins-{bad,ugly}`) so H.264/AAC and the
-    usual containers just work
--   **Firefox** as the browser (RPM), **Steam** from negativo17, and
-    [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html)
-    as the interface font
--   The OS calls itself **Floatblue** — Settings → About, installer branding,
-    hostname — and Bluefin's *uwelcome* banner is replaced by a `fastfetch`
-    system summary
+* **Flat Remix** in blue, for GTK, libadwaita, the shell and the icons, with
+  the Adwaita cursor. Toggling light and dark in Settings swaps all four at
+  once, which took a little work: Flat Remix keeps Light and Dark in separate
+  theme folders and its `libadwaita/` has no `gtk-dark.css`, so every libadwaita
+  app would stay light no matter what the colour scheme said. A per user
+  service called `float-theme-sync` watches that setting and applies all four,
+  including to native GTK3 and GTK4 apps and to Flatpaks
+* **The logo.** Shipped under the pixmap file names the base tooling already
+  looks for, plus both Plymouth watermarks, with the initramfs rebuilt so the
+  splash is branded from the very first frame
+* **Wallpapers.** Just the Tails collection. The Fedora, GNOME and Bluefin ones
+  are gone along with their entries in the picker, and which Tails image is the
+  default gets decided by `RANDOM` during the build, so every rebuild lands on
+  a different one
+* **Homebrew** via `ublue-brew`, with the setup service and the weekly update
+  and upgrade timers
+* **Codecs** from the negativo17 COPR (`ffmpeg`, `gstreamer1-libav`,
+  `gstreamer1-plugins-{bad,ugly}`) so H.264 and AAC and the usual containers
+  just work
+* **Firefox** as the browser, as an RPM. **Steam** from negativo17.
+  [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html)
+  as the interface font
+* The system calls itself **Floatblue**, in Settings, in the installer and as
+  the hostname. Bluefin's welcome banner is gone, replaced by a `fastfetch`
+  summary
 
-The desktop layout is stock GNOME throughout: no Dash to Dock, no accent icons,
-no window-button reshuffling, no interface settings on top of what the base
-image ships.
-
-From Bluefin DX you get the default developer tooling out of the box: VS Code, Docker/Podman, a Logo Menu appindicator support and the `<CTRL><ALT>t` terminal shortcut. Rootful Docker and Starship are off by default and Tailscale doesn't start automatically.
+From Bluefin DX you already have VS Code, Docker and Podman, the app indicator
+menu and Ctrl+Alt+T. Rootful Docker and Starship are off and Tailscale does
+not start on its own.
 
 ## Image Tags
 

@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Build Live ISOs
 
 on:
@@ -50,7 +49,6 @@ jobs:
         with:
           submodules: recursive
 
-      # The image registry name must be lower-case, but GitHub usernames can be capitalized.
       - name: Get lower-case equivalent of the repository owner's username
         id: repo_owner_case
         run: echo "lowercase=${REPO_OWNER,,}" >> "$GITHUB_OUTPUT"
@@ -60,9 +58,6 @@ jobs:
           IMAGE="ghcr.io/${{ steps.repo_owner_case.outputs.lowercase }}/${{ matrix.name }}:${{ matrix.tag }}"
           CACHE_REPO="ghcr.io/${{ steps.repo_owner_case.outputs.lowercase }}/floatblue-iso-cache-${{ matrix.name }}"
           echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
-          # note: buildah's cache flags take a bare repository reference (no
-          # tag/digest and no BuildKit "type=registry,ref=...,mode=max" syntax),
-          # so keep each matrix row's cache in its own repo name
           sudo env TMPDIR=/mnt/podman-storage/tmp podman build \
             --cap-add sys_admin \
             --security-opt label=disable \
@@ -80,8 +75,6 @@ jobs:
           sudo du -sh /mnt/podman-storage.img
 
       - name: Build ISOs
-        # Pin to the exact revamp-pr commit (7737f47) for reproducible ISO
-        # builds instead of following the moving branch.
         uses: Zeglius/titanoboa@7737f4748458252ac827dca14b3d6dd09298472a
         id: build
         with:
@@ -123,9 +116,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Publish the freshly built ISOs as a public GitHub Release so the
-      # website (and anyone else) can download them without authentication.
-      # Workflow artifacts are private; release assets are public.
       - name: Download ISO Artifacts
         uses: actions/download-artifact@v4
         with:

@@ -1,72 +1,36 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
 
-# doas plus the BSD/Unix corner of the toolbox.
-#
-# doas is OpenBSD's privilege escalation. It is here alongside sudo rather than
-# instead of it: doas is a much smaller attack surface (one small setuid binary
-# versus sudo's plugin stack), but it is not a drop-in replacement — there is
-# no `sudo -u`, and doas.conf is far poorer than sudoers — and this image is
-# used for administration where Ansible and the usual scripts assume sudo.
-# So both are installed, and sudo stays.
-#
-# Note the package is called "opendoas" (as on Debian, where "doas" is a
-# transitional package); the command it installs is still `doas`.
-
-# Everything else is picked for what a sysadmin/web-dev actually reaches for,
-# not for completeness. Package names were checked against the Fedora 44
-# Everything metadata; the genuinely BSD ones that Fedora does not package
-# (openbsd-inetd, netcat-openbsd, the NetBSD cb-* tools) are absent by upstream
-# decision, not by oversight.
 modules:
   - type: dnf
     install:
-      # These renames and drops between releases on a rolling base, and a
-      # missing one should not fail the whole image build.
       skip-unavailable: true
       packages:
-        # privilege escalation
         - opendoas
 
-        # shells: ksh is OpenBSD's /bin/sh lineage, dash is a fast POSIX sh
-        # that is much better for testing script portability than bash.
         - ksh
         - dash
 
-        # BSD text tools: vis is BSD's vi and reads vi/vim motions, ed is the
-        # line editor everything was built on, mandoc is BSD's man formatter.
         - vis
         - ed
         - mandoc
         - bc
 
-        # test runner for shell scripts, and a second terminal multiplexer
         - bats
         - screen
 
-        # runtime inspection: ltrace alongside strace, lsof for open files
         - ltrace
         - strace
         - lsof
 
-        # sysadmin core that is not in a minimal base image
         - rsync
         - gawk
         - mawk
         - parallel
 
-        # the autotools chain, for building from source on an old CPU where a
-        # toolchain already present beats spinning up a container
         - m4
         - autoconf
         - automake
         - libtool
 
-  # Grant the wheel group the usual persistent doas access.
-  #
-  # Appended in a script rather than shipped as a file, on purpose: if the repo
-  # owned /etc/doas.conf it would diverge from the package and fight the next
-  # package upgrade. "persist" keeps the credential for the whole login, which
-  # is the one place doas is really nicer than sudo.
   - type: script
     snippets:
-      - "grep -q '^permit persist :wheel' /etc/doas.conf || printf '\\n# Added by the Floatblue unix-tooling feature\\npermit persist :wheel\\n' >> /etc/doas.conf"
+      - "grep -q '^permit persist :wheel' /etc/doas.conf || printf '\\npermit persist :wheel\\n' >> /etc/doas.conf"

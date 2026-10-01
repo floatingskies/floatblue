@@ -1,27 +1,6 @@
 #!/usr/bin/bash
 set -euo pipefail
 
-# Rewrites /usr/lib/os-release so the OS identifies itself as Floatblue
-# everywhere: Settings -> About, the live-ISO installer branding, CPE_NAME,
-# DEFAULT_HOSTNAME and so on. The output follows the same structure Universal
-# Blue's Bluefin uses.
-#
-# The flavor is detected from the base image's own os-release ID, so this file
-# keeps working through base-image and Fedora version bumps with no edits:
-#
-#   base ID is bluefin  -> "Floatblue"
-#   base ID is bazzite  -> "Floatite"
-#   anything else       -> "Floatblue"
-#
-# Fields that describe the underlying OS (VERSION_ID, VERSION_CODENAME,
-# VARIANT, SUPPORT_END, ...) are preserved from the base image, which keeps
-# the file correct when the recipes move between Fedora releases.
-#
-# Overridable via the environment: IMAGE_NAME, IMAGE_ID, IMAGE_HOSTNAME,
-# IMAGE_HOME_URL, IMAGE_DOCUMENTATION_URL, IMAGE_SUPPORT_URL,
-# IMAGE_BUG_REPORT_URL, RELEASE_TYPE. OUT_OS_RELEASE and BASE_OS_RELEASE are
-# also overridable for testing / cross-compiling.
-
 BASE_OS_RELEASE="${BASE_OS_RELEASE:-/etc/os-release}"
 OUT_OS_RELEASE="${OUT_OS_RELEASE:-/usr/lib/os-release}"
 
@@ -64,7 +43,6 @@ IMAGE_DOCUMENTATION_URL="${IMAGE_DOCUMENTATION_URL:-https://github.com/floatings
 IMAGE_SUPPORT_URL="${IMAGE_SUPPORT_URL:-https://github.com/floatingskies/floatblue/issues}"
 IMAGE_BUG_REPORT_URL="${IMAGE_BUG_REPORT_URL:-https://github.com/floatingskies/floatblue/issues}"
 
-# Bluefin-style build stamp: <channel>-<v>.YYYYMMDD.1
 VERSION="$RELEASE_TYPE-$BASE_VERSION_ID.$(date -u +%Y%m%d).1"
 
 {

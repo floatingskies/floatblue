@@ -1,6 +1,3 @@
-# The base ublue images override GNOME's default fonts
-# So we override them back: interface font is Intel One Mono,
-# the document font stays as Adwaita Sans.
 
 [org.gnome.desktop.wm.preferences]
 titlebar-font='Intel One Mono 11'

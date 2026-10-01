@@ -2,16 +2,12 @@
 Description=Ensure the Flathub remote is configured
 Documentation=https://docs.flatpak.org/en/latest/flatpak-command-remote-add.html
 After=flatpak.service
-# Get the remote in place before the session starts, so GNOME Software and
-# `flatpak install` work on a machine that has just booted.
 Before=display-manager.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/bin/float-ensure-flathub
-# Writing the remote is a local file operation; if it somehow stalls, do not
-# hold up the boot.
 TimeoutStartSec=60
 
 [Install]

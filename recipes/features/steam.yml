@@ -1,7 +1,4 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
 
-# Steam client from negativo17. Bluefin DX does not ship it, so this is the
-# only way Steam ends up on the image.
 modules:
   - type: dnf
     repos:

@@ -1,5 +1,3 @@
-# Bluefin overrides Gnome default fonts
-# So we override them back
 
 [org.gnome.desktop.wm.preferences]
 titlebar-font='Adwaita Sans 11'
