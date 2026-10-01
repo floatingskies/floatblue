@@ -161,21 +161,30 @@ not start on its own.
 
 First install any [Fedora Atomic](https://fedoraproject.org/atomic-desktops/) or [Universal Blue](https://universal-blue.org) desktop edition ( one that has GNOME, like Silverblue or Bluefin).
 
-Then use `bootc switch` to switch to the image. For example:
+Then switch to the image and reboot:
 
 ```
-
-sudo bootc switch ghcr.io/floatingskies/floatblue:latest --enforce-container-sigpolicy
-
-```
-
-reboot
-
-```
-
+sudo bootc switch ghcr.io/floatingskies/floatblue:stable
 systemctl reboot
+```
+
+Swap `:stable` for `:latest` (daily) or `:gts` (newest base).
+
+There is no `--enforce-container-sigpolicy` on that command, and that is
+deliberate. The flag makes bootc refuse to pull anything unless
+`/etc/containers/policy.json` says what signature it should require, and this
+image ships no policy file on purpose. With no policy, containers falls back to
+`insecureAcceptAnything` and bootc would just stop with
 
 ```
+containers-policy.json specifies a default of `insecureAcceptAnything`; refusing usage
+```
+
+A policy is worth having, but the one that is actually useful here is a
+restrictive one, and that is exactly what breaks `podman pull` and `bootc
+switch` itself, since those are how this image installs and updates. So the
+images are signed, and you check them by hand instead. See
+[Verification](#verification) below.
 
 ## Installing via ISO
 
