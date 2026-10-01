@@ -44,8 +44,10 @@ modules:
     system:
       enabled:
         - firewalld.service
+        # chrony ships chronyd.service and chronyd-restricted.service; there is
+        # no chronyd-readonly.service, and the systemd module fails the build on
+        # a unit that does not exist.
         - chronyd.service
-        - chronyd-readonly.service
       # Privacy services that phone home or broadcast presence. Disabled rather
       # than masked where a user might reasonably want them back with one
       # command: an outright mask makes cups unstartable without unmasking
