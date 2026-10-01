@@ -32,14 +32,17 @@ modules:
         - rpmfusion-free.repo
         - rpmfusion-nonfree.repo
     install:
+      # Deliberately without skip-unavailable. Every package below is one
+      # apply-mac-hardware.sh treats as fatal: no WiFi, no camera, no Bluetooth.
+      # Letting dnf skip them quietly would build an image that looks fine and
+      # then has no network on the hardware it exists for. The failure naming the
+      # package is the whole point.
       packages:
         - broadcom-wl
         - akmod-wl
         - akmods
         - v4l2loopback
         - bluez
-        - smc-tools
-        - t2fan
 
   - type: dnf
     repos:
@@ -54,6 +57,10 @@ modules:
         - ffmpeg
         - libavcodec
         - gstreamer1-libav
+        # Fan control and SMC readings only matter on the T2 Macs, and the
+        # verifier already reports these as optional rather than failing.
+        - t2fan
+        - smc-tools
 
   - type: script
     scripts:

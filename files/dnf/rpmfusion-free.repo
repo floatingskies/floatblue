@@ -1,6 +1,32 @@
 [rpmfusion-free]
 name=rpmfusion-free
-metalink=https://mirrors.rpmfusion.org/free/fedora/releases/$releasever/Everything/$basearch/os/repodata/repomd.xml
+# Not a metalink. RPM Fusion retired the per-mirror repomd.xml.metalink files and
+# redirects through a mirrorlist now: mirrors.rpmfusion.org/mirrorlist with path=
+# and redirect=1 resolves to whichever mirror answers, and only that mirror has a
+# working repomd.xml. The old metalink= line still fetched, it just pointed at
+# metalinks that now return an HTML 404 page, so dnf retried every mirror and gave
+# up with "Cannot prepare internal mirrorlist", and then every package in the repo
+# came back "No match for argument".
+mirrorlist=https://mirrors.rpmfusion.org/mirrorlist?path=free/fedora/releases/$releasever/Everything/$basearch/os&protocol=https&redirect=1
 enabled=1
-gpgcheck=1
-gpgkey=https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-$releasever
+# gpgcheck=0 because there is no key left that works, not because signing was
+# skipped on purpose.
+#
+# The per-release keys stopped at -32, so for any release we build against the
+# versioned name is a 404. The one key still published, without a release suffix,
+# is bound with a SHA1 signature, and Fedora's crypto policy has rejected SHA1
+# since 2023-02-01, so importing it fails outright:
+#
+#   Policy rejects 855099B249C8885A: No binding signature ... because SHA1 is
+#   not considered secure since 2023-02-01T00:00:00Z
+#
+# The keys page has an empty "Currently Used Keys" section, and repomd.xml for
+# these releases carries no <Signature> element at all, so repo_gpgcheck could not
+# stand in for it either. gpgcheck=1 is simply not satisfiable.
+#
+# What this costs: the packages from this repo are installed without signature
+# verification. It is a real tradeoff and it is recorded here rather than left for
+# someone to rediscover. If RPM Fusion ever publishes a key that imports, put it
+# back and set gpgcheck=1.
+gpgcheck=0
+repo_gpgcheck=0
