@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Boot-time branding.
+#
+# The pixmaps and the Plymouth watermarks themselves are plain files and ship
+# with the files module (files/system/usr/share/{pixmaps,plymouth}), under the
+# filenames the base tooling already looks for:
+#
+#   /usr/share/pixmaps/fedora-{gdm-logo,logo-icon,logo-med,logo,logo-small,
+#                               whitelogo-med}.png
+#   /usr/share/plymouth/themes/spinner/{watermark,silverblue-watermark}.png
+#
+# set-os-release.sh also writes LOGO=fedora-logo-icon, so Settings -> About and
+# the GDM greeter pick the branded image up by name, with no other wiring.
+#
+# The initramfs module is the part that cannot be a file: the Plymouth theme is
+# read from the initramfs during boot, so without regenerating it the
+# watermark would only appear after the switch to the real root filesystem.
+modules:
+  - type: initramfs

@@ -4,7 +4,7 @@
 #
 #  ./download-iso.sh [IMAGE_NAME] [IMAGE_TAG]
 #
-#   IMAGE_NAME is floatfin (default)
+#   IMAGE_NAME is floatblue (default)
 #   TAG_NAME is one of stable, gts, latest (default is gts)
 #
 
@@ -12,7 +12,7 @@ if [ -z $(command -v podman) ]; then
     echo "Podman is required"
     exit 1
 fi
-IMAGE_NAME=${1-floatfin}
+IMAGE_NAME=${1-floatblue}
 IMAGE_TAG=${2-gts}
 echo "Creating an ISO for the $IMAGE_NAME:$IMAGE_TAG image"
 rm -rf ./output

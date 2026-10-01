@@ -8,7 +8,7 @@ set -eou pipefail
 # Bluefin's banner is "uwelcome" (launched from /etc/profile.d/uwelcome.sh and
 # from the base fish greeting); older ublue-motd installs are cleaned up too.
 #
-# The Floatfin fish greeting (/usr/share/fish/vendor_conf.d/fish_greeting.fish)
+# The Floatblue fish greeting (/usr/share/fish/vendor_conf.d/fish_greeting.fish)
 # is shipped separately and intentionally left alone: it drops the banner and
 # runs `ublue-fastfetch` (with the foxy.png logo) as a lean system summary.
 rm -f /etc/profile.d/uwelcome.sh

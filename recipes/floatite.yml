@@ -17,17 +17,17 @@ modules:
   - from-file: features/devops.yml
   - from-file: features/cockpit.yml
   - from-file: features/fonts.yml
-  - from-file: features/gnome-ui-fixes.yml
+  - from-file: features/branding.yml
+  - from-file: features/theming.yml
   - from-file: features/wallpapers.yml
-  - type: gschema-overrides  # Float defaults: Intel One Mono interface font, dark Zorin theme, night wallpaper
+  - from-file: features/hardening.yml
+  - from-file: features/networking.yml
+  - from-file: features/codecs.yml
+  - from-file: features/brew.yml
+  - from-file: features/flatpaks.yml
+  - type: gschema-overrides  # Float defaults: Intel One Mono interface font
     include:
       - zz42-float.gschema.override
-      - zz999-float-bazzite-theme.gschema.override
-      - zz999-float-bazzite-wallpaper.gschema.override
-  - type: gnome-extensions
-    install:
-      - Dash to Dock
   - type: script
     scripts:
       - ublue-disable-steam-autostart.sh
-  - type: initramfs  # Regenerate initramfs so the plymouth spinner theme + pixmaps changes are baked in

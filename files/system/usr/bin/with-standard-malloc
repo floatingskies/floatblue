@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+# with-standard-malloc — run a command with the stock glibc allocator.
+#
+# hardened_malloc is preloaded system-wide via /etc/ld.so.preload (see that
+# file). This is the escape hatch: it runs COMMAND with that preload removed,
+# for the cases where the hardened allocator costs more than it is worth —
+# a JIT-heavy benchmark, a profiler, or anything you are chasing a
+# performance regression on.
+#
+#     with-standard-malloc ./benchmark
+#     with-standard-malloc make -j4
+#
+# Nothing is changed on disk and nothing is permanent: it affects only this one
+# command and its children.
+#
+# Requires bubblewrap (bwrap), which is present on any Fedora Atomic image.
+
+set -euo pipefail
+
+usage() {
+    echo 'Usage: with-standard-malloc COMMAND [ARGS...]'
+    echo 'Runs COMMAND with the standard memory allocator instead of hardened_malloc.'
+    exit
+}
+
+case "${1-}" in
+    '' | --help) usage ;;
+    --) shift ;;
+    *) ;;
+esac
+
+if ! command -v bwrap >/dev/null 2>&1; then
+    echo "with-standard-malloc: bwrap (bubblewrap) not found" >&2
+    exit 1
+fi
+
+# --dev-bind / / gives the command the real root (so it can read the real
+# /etc and libraries); the empty ro-bind over /etc/ld.so.preload is what
+# actually neutralises the preload, and LD_PRELOAD is cleared for good measure
+# in case something set it in the environment.
+exec /usr/bin/bwrap \
+    --dev-bind / / \
+    --ro-bind-try /dev/null /etc/ld.so.preload \
+    --unsetenv LD_PRELOAD \
+    -- /usr/bin/bash -c 'exec -- "$0" "$@"' "$@"

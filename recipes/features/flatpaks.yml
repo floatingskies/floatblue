@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Default Flatpaks, installed at first boot from a managed list.
+#
+# Nothing is baked into the image, so the apps can be updated on the live
+# system without rebasing. Edit /etc/flatpak/install to change the list: one
+# app-id per line, '#' starts a comment.
+#
+# The list deliberately does not duplicate anything the base image already
+# ships as an RPM (Firefox is the browser, GIMP/LibreOffice come from Fedora),
+# and stays on apps that need no third-party repository.
+modules:
+  - type: files
+    files:
+      - source: flatpaks/etc/flatpak/install
+        destination: /etc/flatpak/install
+      - source: flatpaks/usr/libexec/float-flatpak-manager.sh
+        destination: /usr/libexec/float-flatpak-manager.sh
+      - source: flatpaks/usr/lib/systemd/system/float-flatpak-manager.service
+        destination: /usr/lib/systemd/system/float-flatpak-manager.service
+      - source: flatpaks/etc/xdg/autostart/float-flatpaks-notify.desktop
+        destination: /etc/xdg/autostart/float-flatpaks-notify.desktop
+      - source: flatpaks/usr/libexec/float-flatpaks-notify.sh
+        destination: /usr/libexec/float-flatpaks-notify.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - float-flatpak-manager.service

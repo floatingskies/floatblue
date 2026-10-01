@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: floatblue
+# description will be included in the image's metadata
+description: Bluefin DX with my personal preferences baked in. This bootable container image follows Bluefin's stable-weekly image channel.
+alt-tags:
+  - stable
+  - stable-weekly
+
+# the base image to build on top of (FROM) and the version tag to use
+base-image: ghcr.io/ublue-os/bluefin-dx
+image-version: stable
+
+# module configuration, executed in order
+# you can include multiple instances of the same module
+modules:
+  - from-file: features/ublue-bluefin-features.yml
+  - from-file: features/devops.yml
+  - from-file: features/steam.yml
+  - type: gschema-overrides  # Intel One Mono on top of Bluefin's font overrides
+    include:
+      - zz42-float.gschema.override

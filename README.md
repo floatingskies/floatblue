@@ -1,42 +1,84 @@
-[![bluebuild build badge](https://github.com/floatingskies/floatfin/actions/workflows/build-daily.yml/badge.svg)](https://github.com/floatingskies/floatfin/actions/workflows/build-daily.yml)
+[![bluebuild build badge](https://github.com/floatingskies/floatblue/actions/workflows/build-daily.yml/badge.svg)](https://github.com/floatingskies/floatblue/actions/workflows/build-daily.yml)
 
 A personal choice distro made by Float.
 
-A group of [Bootable Container](https://containers.github.io/bootable/) images built on top of [Bluefin DX](https://projectbluefin.io). [Bazzite](https://bazzite.gg) (GNOME) with [BlueBuild](https://blue-build.org)s tools. All the following is added to the image during the build time as a layer over the Universal Blue base including a generated initramfs so the boot-time branding stays.
+A group of [Bootable Container](https://containers.github.io/bootable/) images built on top of [Bluefin DX](https://projectbluefin.io). [Bazzite](https://bazzite.gg) (GNOME) with [BlueBuild](https://blue-build.org)s tools. All the following is added to the image during the build time as a layer over the Universal Blue base.
+
+The desktop layout is left stock GNOME: no Dash to Dock, no accent icons, no
+window-button reshuffling, no interface settings on top of what the base image
+ships. Only the skin changes.
 
 Customizations added to the image:
 
+-   **Flat Remix theming**, Blue by default, across all four layers at once: GTK
+    (`Flat-Remix-GTK-Blue-Light`/`-Dark`), libadwaita, GNOME Shell
+    (`Flat-Remix-Light`/`-Dark`, via the *User Themes* extension) and icons
+    (`Flat-Remix-Blue-Light`/`-Dark`). The cursor stays **Adwaita**. Flatpak apps
+    get the same themes through a system-wide `flatpak override`. Upstream
+    tarballs are pinned to a commit, so rebuilds are reproducible.
+
+-   **The light/dark toggle follows through.** GNOME's Settings → Appearance (or
+    the quick-settings toggle) swaps GTK, libadwaita, the shell theme and the
+    icons together. This needs a little help: Flat Remix ships Light and Dark as
+    *separate theme directories*, and its `libadwaita/` directory only contains a
+    `gtk.css` (no `gtk-dark.css`), so leaving it to GTK's own colour-scheme
+    handling would keep every libadwaita app light. `float-theme-sync`, a per-user
+    service enabled for every login, watches `color-scheme` and applies all four.
+    Native GTK3/GTK4 apps are covered too, via `~/.config/gtk-{3,4}.0/settings.ini`
+    seeded from `/etc/skel`.
+
+-   **Tails wallpapers, picked at random per build.** The Fedora, GNOME and
+    Bluefin wallpapers are deleted along with their GNOME picker entries; the
+    Tails collection is the only one offered. Both images show up in the picker,
+    and which one is the first-boot default is decided by `RANDOM` during the
+    build, so every rebuild/rebase lands on a different one. Nothing is
+    downloaded at build time.
+
+-   **The FloatOS logo everywhere it can show up.** Shipped under the pixmap
+    filenames the base tooling already looks for (`fedora-gdm-logo.png`,
+    `fedora-logo{,-icon,-med,-small}.png`, `fedora-whitelogo-med.png`) plus both
+    Plymouth spinner watermarks, and the initramfs is regenerated so the splash
+    is branded from the first frame. The logo is square, so it is letterboxed
+    into each target box rather than squashed.
+
+-   **Secureblue-style hardening, adapted** (see
+    [recipes/features/hardening.yml](recipes/features/hardening.yml) for the full
+    list of what was left out and why): kernel/network sysctl hardening,
+    `hardened_malloc` preloaded system-wide (with `with-standard-malloc COMMAND`
+    as an escape hatch), core dumps disabled, account lockout and password
+    quality via the stock `pam_faillock`/`pam_pwquality`, per-network Wi-Fi MAC
+    randomization, NTS-authenticated time, a desktop firewalld zone, and
+    `geoclue`/`passim`/`cups`/`bluetooth` off. It stops short of removing
+    `sudo`/`su`/`pkexec`, disabling Xwayland, blocking `ping`, or restricting
+    `containers/policy.json`, because this image ships Steam, a network toolset,
+    and uses podman/`bootc switch` to install and update itself.
+
+-   **Homebrew** via `ublue-brew`, with the setup service and weekly
+    update/upgrade timers enabled.
+
+-   **Default Flatpaks** installed at first boot from `/etc/flatpak/install`
+    (edit that file to change them; nothing is baked in, so they update without
+    rebasing): Flatseal, VLC, Extension Manager, Bitwarden, KDE Connect, Inkscape.
+
+-   **Network and light security tooling**, all from stock Fedora repos: `nmap`
+    `masscan` `arp-scan` `tcpdump` `wireshark-cli` `termshark` `traceroute` `mtr`
+    `iperf3` `ethtool` `netcat` `socat` `gnutls-cli` `lynis` `audit`
+    `libpwquality-tools`. Password crackers and brute-forcers are deliberately
+    left out.
+
+-   **Multimedia codecs** from the negativo17 COPR: `ffmpeg`,
+    `gstreamer1-libav`, `gstreamer1-plugins-{bad,ugly}`, replacing the `-free`
+    set so H.264/AAC and the usual containers just work.
+
 -   Firefox as the browser (installed from RPM)
-
--   **Zorin OS themes**. All `ZorinBlue`/`Brown`/`Green`/`Grey`/`Orange`/`Purple`/`Red`/`Yellow` light+dark set in `/usr/share/themes` defaulting to `ZorinBlue-Light` (Bluefin) and `ZorinBlue-Dark` (Bazzite). Change any of them with `float-theme <name>` or `float-theme` to see all options. The theme is applied to GNOME, native GTK4 apps (via a ~/.config/gtk-4.0`) and GTK4 apps inside Flatpak
-
--   **Default wallpaper**. `Pixel Lake of Sound.jpeg` from the `Lake of Sound` collection on Bluefin and `Pixel Night of Sound.jpeg` on Bazzite (along with the `Floating Skies` System76 Framework, Ubuntu and KDE/Plasma collections in the GNOME wallpaper picker). Change it with `float-theme --wallpaper <name>`
 
 -   [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html) as the font (the document font stays Adwaita Sans)
 
 -   Steam installed on the Bluefin images from negativo17 (Bazzite already has it)
 
--   Clocks set to AM/PM view with Weekday Display
+-   The OS tells itself as *Floatblue* (Bluefin-based images) and *Floatite* (Bazzite-based images). Settings → About, installer branding, hostname
 
--   Single click to open items in Nautilus
-
--   Smaller icons in Nautilus icon view
-
--   Directories appear first in Nautilus and GTK file choosers
-
--   Dark styles are the default
-
--   Dash-to-Dock is placed at the bottom skipping the Overview on login
-
--   Windows have minimize and maximize buttons
-
--   Touchpad tap-to-click is turned on
-
--   Fedora/GDM logo and the Plymouth spinner watermark are replaced with our own and the initramfs is rebuilt so they appear from the boot
-
--   The OS tells itself as *Floatfin* (Bluefin-based images) and *Floatite* (Bazzite-based images). Settings → About, installer branding, hostname
-
--   Bluefins *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a system summary with the floatfin.png logo and a **Floatfin** title
+-   Bluefins *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a system summary with the Floatblue ASCII logo and a **Floatblue** title
 
 -   A dev-ops / sysadmin / web-dev CLI toolkit included: `ansible-core` `gh` `git-lfs` `jq` `shellcheck` `sshpass` `bind-utils` `htop` `iotop` `iperf3` `mtr` `ncdu` `net-tools` `sysstat` `tmux` `tree` `whois` `wget` `btop` `fd-find` `fzf` `pv` `ripgrep` `nodejs` `npm` and `python3-pip`
 
@@ -46,13 +88,13 @@ Bluefins default Flatpaks still install on login; no extra Flatpaks are added to
 
 ## Image Tags
 
-`floatfin` is an overlay on [Bluefin DX](https://docs.projectbluefin.io/administration#upgrades-and-throttle-settings) following Bluefins image channels:
+`floatblue` is an overlay on [Bluefin DX](https://docs.projectbluefin.io/administration#upgrades-and-throttle-settings) following Bluefins image channels:
 
--   `ghcr.io/floatingskies/floatfin:gts` -- Bluefins gts stream, updated
+-   `ghcr.io/floatingskies/floatblue:gts` -- Bluefins gts stream, updated
 
--   `ghcr.io/floatingskies/floatfin:stable` -- Bluefins stable-weekly stream, updated weekly
+-   `ghcr.io/floatingskies/floatblue:stable` -- Bluefins stable-weekly stream, updated weekly
 
--   `ghcr.io/floatingskies/floatfin:latest` -- Bluefins latest stream, updated daily
+-   `ghcr.io/floatingskies/floatblue:latest` -- Bluefins latest stream, updated daily
 
 -   `ghcr.io/floatingskies/floatite:latest` -- Bazzite (GNOME) DX, updated daily
 
@@ -64,7 +106,7 @@ Then use `bootc switch` to switch to the image. For example:
 
 ```
 
-sudo bootc switch ghcr.io/floatingskies/floatfin:latest --enforce-container-sigpolicy
+sudo bootc switch ghcr.io/floatingskies/floatblue:latest --enforce-container-sigpolicy
 
 ```
 
@@ -82,17 +124,17 @@ If you have `podman` on your system you can create an offline ISO with the `down
 
 ```
 
-./download-iso.sh floatfin stable
+./download-iso.sh floatblue stable
 
 ```
 
-where `$IMAGE_NAME` is `floatfin` and `$TAG_NAME` is `stable` `gts` or `latest` (the script defaults to `floatfin:gts` if you omit both).
+where `$IMAGE_NAME` is `floatblue` and `$TAG_NAME` is `stable` `gts` or `latest` (the script defaults to `floatblue:gts` if you omit both).
 
 ## Live ISO Images
 
-Like [Bluefin](https://projectbluefin.io) and [Bazzite](https://bazzite.gg) live desktop ISOs are made using [Titanoboa](https://github.com/ublue-os/titanoboa). Start the **"Build ISOs"** GitHub Actions workflow ([Actions → Build Live ISOs](https://github.com/floatingskies/floatfin/actions/workflows/build-iso.yml)) and download the artifact:
+Like [Bluefin](https://projectbluefin.io) and [Bazzite](https://bazzite.gg) live desktop ISOs are made using [Titanoboa](https://github.com/ublue-os/titanoboa). Start the **"Build ISOs"** GitHub Actions workflow ([Actions → Build Live ISOs](https://github.com/floatingskies/floatblue/actions/workflows/build-iso.yml)) and download the artifact:
 
--   `floatfin-stable-live-amd64.iso`. Live Bluefin desktop with the installed image inside
+-   `floatblue-stable-live-amd64.iso`. Live Bluefin desktop with the installed image inside
 
 Boot the ISO. You have the full desktop running live from the image. To install the image to disk start **"Install, to Disk"** from the desktop (Anaconda). The installer also offers to enroll the Universal Blue boot key (password: `universalblue`) so it can boot with Secure Boot; it also works without Secure Boot or you can enroll your own keys later.
 
@@ -102,11 +144,11 @@ These images are signed with [Sigstore](https://www.sigstore.dev/)s [cosign](htt
 
 ```
 
-cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:gts
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatblue:gts
 
-cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:stable
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatblue:stable
 
-cosign verify --key cosign.pub ghcr.io/floatingskies/floatfin:latest
+cosign verify --key cosign.pub ghcr.io/floatingskies/floatblue:latest
 
 cosign verify --key cosign.pub ghcr.io/floatingskies/floatite:latest
 

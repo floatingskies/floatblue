@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Mult codecs from the negativo17 COPR, which this repo already trusts for
+# Steam.
+#
+# Fedora cannot ship these for patent reasons, which leaves H.264/AAC playback
+# and a pile of media containers working only by accident. This replaces the
+# codec set wholesale rather than layering a second one on top, because having
+# both ffmpeg and ffmpeg-free installed is how you end up with a GStreamer
+# registry that resolves the wrong plugin.
+#
+# The `-free` packages already present in the base image are swapped for their
+# full counterparts.
+modules:
+  - type: dnf
+    repos:
+      nonfree: negativo17
+    install:
+      packages:
+        - ffmpeg
+        - ffmpegthumbnailer
+        - mediainfo
+        - gstreamer1-libav
+        - gstreamer1-plugins-bad
+        - gstreamer1-plugins-ugly
+    replace:
+      - from-repo: negativo17
+        skip-unavailable: true
+        packages:
+          - old: ffmpeg-free
+            new: ffmpeg
+          - old: libavcodec-free
+            new: libavcodec
+          - old: libavdevice-free
+            new: libavdevice
+          - old: libavfilter-free
+            new: libavfilter
+          - old: libavformat-free
+            new: libavformat
+          - old: libavutil-free
+            new: libavutil
+          - old: libpostproc-free
+            new: libpostproc
+          - old: libswresample-free
+            new: libswresample
+          - old: libswscale-free
+            new: libswscale

@@ -1,18 +1,23 @@
 #!/usr/bin/bash
 set -euo pipefail
 
-# Grant Flatpak apps read access to the host theme and wallpaper directories.
+# Let Flatpak apps see the Flat Remix themes and icons.
 #
-# Without this, a GTK4 app inside a sandbox cannot see /usr/share/themes, so it
-# falls back to Adwaita even though the host is running ZorinBlue-*. The
-# override is applied system-wide here (image build time); `float-theme` re-applies
-# it at the user level so a theme switch takes effect without root.
+# A GTK app inside the sandbox has no /usr/share/themes or /usr/share/icons,
+# so without this it falls back to Adwaita even though the host is themed. The
+# system-wide override is applied here at image build time; float-theme-sync
+# re-applies it per user so switching theme or light/dark takes effect without
+# root.
 #
-# Only the *global* override is touched — per-application overrides users set in
-# the Flatseal GUI are left alone.
+# GTK_THEME is also set per user by float-theme-sync (it has to change between
+# the Light and Dark variants). It is deliberately *not* pinned here: a value
+# baked into the system override would fight the per-user one on every switch.
+#
+# Only the *global* override is touched — per-application overrides set in the
+# Flatseal GUI are left alone.
 
 flatpak override --system \
     --filesystem=/usr/share/themes:ro \
-    --filesystem=/usr/share/backgrounds:ro
+    --filesystem=/usr/share/icons:ro
 
-echo "Set system-wide Flatpak override: /usr/share/themes, /usr/share/backgrounds"
+echo "Set system-wide Flatpak override: /usr/share/themes, /usr/share/icons"

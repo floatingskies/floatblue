@@ -1,0 +1,21 @@
+# First-boot theme defaults.
+#
+# These only matter until float-theme-sync first runs, which happens in the
+# user's session and re-applies the same values — the keys below are what a
+# fresh account (and the GDM greeter) sees before that.
+#
+# Light is the default; GNOME's Settings -> Appearance (or the quick-settings
+# toggle) flips color-scheme to 'prefer-dark' and float-theme-sync swaps the
+# whole set — GTK, libadwaita, shell and icons — to the Blue-Dark pair.
+#
+# Note the Flat Remix GTK themes carry both gtk.css and gtk-dark.css under
+# gtk-4.0/, but only a gtk.css under libadwaita/, so libadwaita apps are the
+# reason the swap has to happen at all rather than being left to GTK's own
+# colour-scheme handling.
+
+[org.gnome.desktop.interface]
+gtk-theme='Flat-Remix-GTK-Blue-Light'
+icon-theme='Flat-Remix-Blue-Light'
+color-scheme='default'
+cursor-theme='Adwaita'
+cursor-size=24

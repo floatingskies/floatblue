@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Desktop firewall zone, mirroring secureblue's FedoraWorkstation override.
+
+  The point of the empty zone is what it does *not* contain: secureblue also
+  ships a zone with every service and port removed, which is right for a
+  server and hostile to a desktop (it kills mDNS, local device discovery and
+  printer discovery). This one inherits firewalld's normal workstation service
+  set and simply adds no extra ports, so a desktop on a home or office LAN
+  still works while inbound connections from the network stay closed.
+
+  Set as the default zone by set-firewalld-default-zone.sh.
+-->
+<zone>
+  <short>Float Workstation</short>
+  <description>Desktop zone: firewalld's default workstation services, no added ports</description>
+</zone>

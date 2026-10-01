@@ -1,8 +1,0 @@
-# Default wallpaper: "Pixel Lake of Sound" from the Lake of Sound collection.
-# The night variant is the default on Bazzite (floatite), which is why
-# zz999-float-bazzite-wallpaper.gschema.override exists separately.
-
-[org.gnome.desktop.background]
-picture-uri='file:///usr/share/backgrounds/Lake%20of%20Sound/Pixel%20Lake%20of%20Sound.jpeg'
-picture-uri-dark='file:///usr/share/backgrounds/Lake%20of%20Sound/Pixel%20Lake%20of%20Sound.jpeg'
-picture-options='zoom'

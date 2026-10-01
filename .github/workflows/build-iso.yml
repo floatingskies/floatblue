@@ -23,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: floatfin
+          - name: floatblue
             tag: stable
-            label: Floatfin-Live
+            label: Floatblue-Live
     steps:
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
@@ -58,7 +58,7 @@ jobs:
       - name: Build Container Image
         run: |
           IMAGE="ghcr.io/${{ steps.repo_owner_case.outputs.lowercase }}/${{ matrix.name }}:${{ matrix.tag }}"
-          CACHE_REPO="ghcr.io/${{ steps.repo_owner_case.outputs.lowercase }}/floatfin-iso-cache-${{ matrix.name }}"
+          CACHE_REPO="ghcr.io/${{ steps.repo_owner_case.outputs.lowercase }}/floatblue-iso-cache-${{ matrix.name }}"
           echo "${{ github.token }}" | sudo podman login ghcr.io -u "${{ github.actor }}" --password-stdin
           # note: buildah's cache flags take a bare repository reference (no
           # tag/digest and no BuildKit "type=registry,ref=...,mode=max" syntax),

@@ -1,0 +1,22 @@
+[Unit]
+Description=Float: follow the GNOME light/dark preference across GTK, libadwaita, shell and icons
+Documentation=man:gsettings(1)
+# Tie it to the graphical session: gsettings needs the session bus, so starting
+# earlier is pointless and starting outside a session is a no-op anyway.
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/float-theme-sync
+# float-theme-sync blocks on `gsettings monitor`. If the session bus is not up
+# yet it exits 0 and we would never come back, so restart unconditionally
+# rather than only on failure.
+Restart=always
+RestartSec=5
+# Applying themes is a handful of gsettings calls; anything slower means
+# something is badly wrong and a tight retry loop would spin.
+TimeoutStopSec=10
+
+[Install]
+WantedBy=default.target

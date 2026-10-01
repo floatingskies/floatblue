@@ -1,9 +1,0 @@
-# Default theme for Bazzite (floatite): ZorinBlue-Dark, to match the default
-# dark wallpaper (Pixel Night of Sound).
-#
-# The full Zorin theme family lives in /usr/share/themes; `float-theme`
-# switches these live.
-
-[org.gnome.desktop.interface]
-gtk-theme='ZorinBlue-Dark'
-color-scheme='prefer-dark'

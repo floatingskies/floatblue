@@ -41,9 +41,9 @@ SECUREBOOT_DOC_URL_QR="/usr/share/ublue-os/secure_boot_qr.png"
 : ${VARIANT_ID:=$ID}
 
 if [[ -n "${VERSION_CODENAME:-}" ]]; then
-    echo "floatfin release $VERSION_ID ($VERSION_CODENAME)" >/etc/system-release
+    echo "floatblue release $VERSION_ID ($VERSION_CODENAME)" >/etc/system-release
 else
-    echo "floatfin release $VERSION_ID" >/etc/system-release
+    echo "floatblue release $VERSION_ID" >/etc/system-release
 fi
 
 # Secureboot Key Fetch

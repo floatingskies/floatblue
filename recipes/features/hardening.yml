@@ -1,0 +1,77 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Hardening, adapted from secureblue (https://github.com/secureblue/secureblue)
+# for this image's two extra constraints: it has to stay usable every day, and
+# it has to stay usable on old hardware (an i5-3550 being the target).
+#
+# What "adapted" means, concretely — these are secureblue measures that are
+# deliberately NOT applied here:
+#
+#   * sudo / su / pkexec are not removed. secureblue's replacement, run0,
+#     starts a full systemd user session per call, which is visibly slow on a
+#     Sandy Bridge CPU and breaks ordinary scripting.
+#   * Xwayland stays enabled. This image ships Steam.
+#   * ping is not disabled. The image also ships a network toolset.
+#   * perf_event_paranoid is 2, not 3, so perf still works on your own
+#     processes.
+#   * rp_filter is loose (2), not strict (1); strict mode drops legitimate
+#     packets on a multi-homed laptop.
+#   * No blanket modprobe blacklisting. secureblue blocks squashfs, nfs and
+#     cifs; squashfs is load-bearing for ostree/bootc and for the live ISO
+#     build.
+#   * No restrictive containers/policy.json. podman and `bootc switch` are how
+#     this image is installed and updated; a policy that rejects unsigned
+#     registries breaks both in ways that are miserable to debug.
+#   * No GNOME user extensions beyond User Themes, and no DNS-over-TLS
+#     resolver replacement (unbound), for the same "works on day one" reason.
+#
+# The reasoning behind each sysctl is inline in
+# files/system/usr/lib/sysctl.d/60-float-hardening.conf.
+modules:
+  - type: dnf
+    install:
+      packages:
+        # A safe allocator for every dynamically linked process, including
+        # Flatpak (via /etc/ld.so.preload). `with-standard-malloc COMMAND`
+        # runs anything with the stock glibc allocator instead, for the cases
+        # where the overhead matters.
+        - hardened_malloc
+        # Authenticated time (NTS) so the clock cannot be pushed around.
+        - chrony
+        # USB device authorisation, installed and usable but not enforcing by
+        # default: a policy that blocks an unknown keyboard at boot is a much
+        # worse outcome than a missing protection.
+        - usbguard
+        # Firewall. The desktop zone is applied by apply-hardening.sh.
+        - firewalld
+        - firewall-config
+
+  - type: systemd
+    system:
+      enabled:
+        - firewalld.service
+        - chronyd.service
+        - chronyd-readonly.service
+      # Privacy services that phone home or broadcast presence. Disabled rather
+      # than masked where a user might reasonably want them back with one
+      # command: an outright mask makes cups unstartable without unmasking
+      # first.
+      #   geoclue / passim  location, masked: rarely wanted, no UI to re-enable
+      #   cups / cups-browsed printing + network printer discovery, disabled
+      #   bluetooth         masking would break BT headphones/keyboards outright
+      masked:
+        - geoclue.service
+        - passim.service
+      disabled:
+        - cups.service
+        - cups-browsed.service
+        - bluetooth.service
+
+
+  # Applies the parts that need a running system manager: default firewall
+  # zone, MAC randomization on already-saved Wi-Fi profiles, and a hard check
+  # that the hardened_malloc preload target exists (a dangling
+  # /etc/ld.so.preload line stops every dynamically linked process starting).
+  - type: script
+    scripts:
+      - apply-hardening.sh

@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 set -euo pipefail
 
-# Rewrites /usr/lib/os-release so the OS identifies itself as Floatfin
+# Rewrites /usr/lib/os-release so the OS identifies itself as Floatblue
 # everywhere: Settings -> About, the live-ISO installer branding, CPE_NAME,
 # DEFAULT_HOSTNAME and so on. The output follows the same structure Universal
 # Blue's Bluefin uses.
@@ -9,9 +9,9 @@ set -euo pipefail
 # The flavor is detected from the base image's own os-release ID, so this file
 # keeps working through base-image and Fedora version bumps with no edits:
 #
-#   base ID is bluefin  -> "Floatfin"
+#   base ID is bluefin  -> "Floatblue"
 #   base ID is bazzite  -> "Floatite"
-#   anything else       -> "Floatfin"
+#   anything else       -> "Floatblue"
 #
 # Fields that describe the underlying OS (VERSION_ID, VERSION_CODENAME,
 # VARIANT, SUPPORT_END, ...) are preserved from the base image, which keeps
@@ -42,9 +42,9 @@ BASE_SUPPORT_END="$(get_kv SUPPORT_END)"
 
 case "$BASE_ID" in
     bluefin*)
-        IMAGE_NAME="${IMAGE_NAME:-Floatfin}"
-        IMAGE_ID="${IMAGE_ID:-floatfin}"
-        IMAGE_HOSTNAME="${IMAGE_HOSTNAME:-floatfin}"
+        IMAGE_NAME="${IMAGE_NAME:-Floatblue}"
+        IMAGE_ID="${IMAGE_ID:-floatblue}"
+        IMAGE_HOSTNAME="${IMAGE_HOSTNAME:-floatblue}"
         ;;
     bazzite*)
         IMAGE_NAME="${IMAGE_NAME:-Floatite}"
@@ -52,17 +52,17 @@ case "$BASE_ID" in
         IMAGE_HOSTNAME="${IMAGE_HOSTNAME:-floatite}"
         ;;
     *)
-        IMAGE_NAME="${IMAGE_NAME:-Floatfin}"
-        IMAGE_ID="${IMAGE_ID:-floatfin}"
-        IMAGE_HOSTNAME="${IMAGE_HOSTNAME:-floatfin}"
+        IMAGE_NAME="${IMAGE_NAME:-Floatblue}"
+        IMAGE_ID="${IMAGE_ID:-floatblue}"
+        IMAGE_HOSTNAME="${IMAGE_HOSTNAME:-floatblue}"
         ;;
 esac
 
 RELEASE_TYPE="${RELEASE_TYPE:-stable}"
-IMAGE_HOME_URL="${IMAGE_HOME_URL:-https://github.com/floatingskies/floatfin}"
-IMAGE_DOCUMENTATION_URL="${IMAGE_DOCUMENTATION_URL:-https://github.com/floatingskies/floatfin#readme}"
-IMAGE_SUPPORT_URL="${IMAGE_SUPPORT_URL:-https://github.com/floatingskies/floatfin/issues}"
-IMAGE_BUG_REPORT_URL="${IMAGE_BUG_REPORT_URL:-https://github.com/floatingskies/floatfin/issues}"
+IMAGE_HOME_URL="${IMAGE_HOME_URL:-https://github.com/floatingskies/floatblue}"
+IMAGE_DOCUMENTATION_URL="${IMAGE_DOCUMENTATION_URL:-https://github.com/floatingskies/floatblue#readme}"
+IMAGE_SUPPORT_URL="${IMAGE_SUPPORT_URL:-https://github.com/floatingskies/floatblue/issues}"
+IMAGE_BUG_REPORT_URL="${IMAGE_BUG_REPORT_URL:-https://github.com/floatingskies/floatblue/issues}"
 
 # Bluefin-style build stamp: <channel>-<v>.YYYYMMDD.1
 VERSION="$RELEASE_TYPE-$BASE_VERSION_ID.$(date -u +%Y%m%d).1"

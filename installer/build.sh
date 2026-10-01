@@ -9,7 +9,7 @@ set -exo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_IMAGE=${BASE_IMAGE:?}
 INSTALL_IMAGE_PAYLOAD=${INSTALL_IMAGE_PAYLOAD:?}
-ISO_LABEL=${ISO_LABEL:-Floatfin-Live}
+ISO_LABEL=${ISO_LABEL:-Floatblue-Live}
 
 # Create the directory that /root is symlinked to
 mkdir -p "$(realpath /root)"
@@ -145,10 +145,10 @@ label: "$ISO_LABEL"
 grub2:
   timeout: 3
   entries:
-    - name: "Launch Floatfin Installer"
+    - name: "Launch Floatblue Installer"
       linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=$ISO_LABEL enforcing=0 rd.live.image"
       initrd: "/images/pxeboot/initrd.img"
-    - name: "Launch Floatfin Installer (Basic Graphics Mode)"
+    - name: "Launch Floatblue Installer (Basic Graphics Mode)"
       linux: "/images/pxeboot/vmlinuz quiet rhgb root=live:CDLABEL=$ISO_LABEL enforcing=0 rd.live.image nomodeset"
       initrd: "/images/pxeboot/initrd.img"
 EOF

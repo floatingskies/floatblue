@@ -11,7 +11,3 @@ modules:
     scripts:
       - set-os-release.sh
       - disable-ublue-motd.sh
-      # Let sandboxed Flatpak apps read the Zorin themes and wallpapers.
-      - apply-flatpak-theme-access.sh
-      # Default ~/.config/gtk-4.0 for native GTK4 apps in new accounts.
-      - seed-default-gtk4.sh

@@ -1,22 +1,22 @@
 #!/usr/bin/bash
-set -euo pipefail
-
-# Generates a GNOME wallpaper XML that registers every image in a wallpaper
-# directory with GNOME's wallpaper picker (Settings -> Wallpaper).
+# Registers every image in a wallpaper directory with GNOME's wallpaper
+# picker (Settings -> Appearance).
 #
-# GNOME only offers wallpapers that are listed in /usr/share/gnome-background-
-# properties/*.xml; bare image files dumped into /usr/share/backgrounds are
-# ignored. Collections that are copied in flat (Ubuntu, KDE, System76,
-# Framework...) therefore need one of these files generated per directory.
+# GNOME only lists wallpapers referenced by an XML in
+# /usr/share/gnome-background-properties; bare image files dropped into
+# /usr/share/backgrounds are ignored. Collections shipped flat (as ours are,
+# via the files module) therefore need one generated XML per directory.
 #
 # Usage:
 #   generate-gnome-wallpaper-xml.sh <wallpaper-dir> <xml-name> [display-prefix]
 #   [output-dir]
 #
-#   wallpaper-dir  directory to scan for images (recursive)
-#   xml-name       base name of the generated file, e.g. "kde-wallpapers"
-#   display-prefix short label shown in front of each entry, e.g. "KDE"
-#   output-dir     where to write the .xml (default: /usr/share/gnome-background-properties)
+#   wallpaper-dir   directory to scan for images (recursive)
+#   xml-name        base name of the generated file, e.g. "tails"
+#   display-prefix  short label shown in front of each entry, e.g. "Tails"
+#   output-dir      where to write the .xml (default: /usr/share/gnome-background-properties)
+
+set -euo pipefail
 
 wallpaper_dir="${1:?usage: $0 <wallpaper-dir> <xml-name> [display-prefix] [output-dir]}"
 xml_name="${2:?usage: $0 <wallpaper-dir> <xml-name> [display-prefix] [output-dir]}"
@@ -37,7 +37,10 @@ xml_escape() {
 
 {
     printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>'
-    printf '%s\n' '<!DOCTYPE wallpapers SYSTEM "/usr/share/backgrounds/gnome/gnome-wp-list.dtd">'
+    # No DOCTYPE on purpose: GNOME resolves
+    # /usr/share/backgrounds/gnome/gnome-wp-list.dtd, and this image deletes
+    # /usr/share/backgrounds/gnome along with the Fedora/GNOME wallpapers, so
+    # pointing at a DTD that is no longer on disk would only risk a parse error.
     printf '%s\n' '<wallpapers>'
     while IFS= read -r -d '' image; do
         name="${image##*/}"
@@ -65,4 +68,4 @@ xml_escape() {
     printf '%s\n' '</wallpapers>'
 } > "$out"
 
-echo "Registered $(grep -c '<filename>' "$out") wallpapers from $wallpaper_dir in $out"
+echo "Registered $(grep -c '<filename>' "$out") wallpaper(s) from $wallpaper_dir in $out"

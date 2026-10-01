@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Homebrew on Linux, as packaged by Universal Blue
+# (https://github.com/ublue-os/brew).
+#
+# The RPM carries a pre-built Homebrew tarball, the units to unpack it on first
+# boot, a weekly update/upgrade timer, shell integration, and a systemd preset
+# that enables all three. The preset normally does the enabling, but they are
+# listed explicitly here so it does not depend on preset timing during the
+# build.
+#
+# Note: `ublue-brew-proxy` (the verification proxy in front of the Homebrew API
+# that secureblue uses) is NOT enabled. It lives in secureblue's own COPR, not
+# ublue-os/packages, so pulling it from here would fail the build. See the
+# README for how to add it if you want that.
+modules:
+  - type: dnf
+    repos:
+      copr:
+        - ublue-os/packages
+    install:
+      packages:
+        - ublue-brew
+
+  - type: systemd
+    system:
+      enabled:
+        # Unpacks /usr/share/homebrew.tar.zst into /home/linuxbrew/.linuxbrew.
+        - brew-setup.service
+        - brew-update.timer
+        - brew-upgrade.timer

@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Networking, packet inspection and light security-audit tooling.
+#
+# Everything here comes from the stock Fedora repos on purpose: no third-party
+# repo has to be babysat across Fedora bumps, which matters for an image that
+# tracks a rolling base.
+#
+# A few of these (iperf3, mtr, bind-utils, socat, net-tools) overlap with the
+# devops feature; dnf treats that as a no-op, and listing them here keeps this
+# feature self-contained if it is ever used on its own.
+#
+# The security side is deliberately the *defensive* end — scanning, inspection
+# and auditing tooling for systems you own or have written permission to test.
+# Password-cracking and brute-force packages (hashcat, john, hydra) are left
+# out: they are among the heaviest things here on an i5-3550, and they only
+# serve to recover credentials you already hold, which is not a lighter use of
+# the machine.
+modules:
+  - type: dnf
+    install:
+      packages:
+        # packet capture and inspection
+        - tcpdump
+        - wireshark-cli
+        - termshark
+        # scanning
+        - nmap
+        - arp-scan
+        - masscan
+        - ethtool
+        - traceroute
+        - mtr
+        - iperf3
+        - netcat
+        - socat
+        - iproute
+        - iputils
+        # TLS inspection
+        - openssl
+        - gnutls-cli
+        # host exposure review and log auditing
+        - lynis
+        - audit
+        - audispd-plugins
+        # DNS detail
+        - bind-utils
+        # password strength auditing (pairs with the shipped pam_pwquality)
+        - libpwquality-tools

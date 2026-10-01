@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
+
+# Flat Remix look: GTK + libadwaita, icons, GNOME Shell, Adwaita cursor.
+#
+# Blue is the default across the board. Light is the shipped default and the
+# only thing a fresh account sees; float-theme-sync then keeps all four layers
+# in step with GNOME's own light/dark preference.
+#
+# Nothing else about the desktop is touched. No Dash to Dock, no accent icons,
+# no window-button reshuffling — the layout stays stock GNOME and only the
+# skins change.
+modules:
+  - type: dnf
+    install:
+      packages:
+        # libadwaita so GTK4 applications actually get the libadwaita skin
+        # Flat Remix ships; without it those apps have nothing to theme.
+        - libadwaita
+        # The Adwaita mouse cursor, as asked for.
+        - adwaita-cursor-theme
+        # Adwaita itself: it is the fallback if the Flat Remix files ever go
+        # missing, so a broken theme degrades instead of leaving widgets bare.
+        - gnome-themes
+
+  # A GNOME Shell theme is ignored unless the User Themes extension is
+  # installed. The module resolves the version that matches the GNOME in the
+  # base image and installs it system-wide into
+  # /usr/share/gnome-shell/extensions/, and fails the build loudly if there is
+  # no compatible release.
+  - type: gnome-extensions
+    install:
+      - User Themes
+
+  - type: gschema-overrides
+    include:
+      - zz500-float-theme.gschema.override
+
+  - type: script
+    scripts:
+      - install-flat-remix-themes.sh
+      # Give new accounts a themed ~/.config/gtk-3.0 and gtk-4.0.
+      - seed-user-theme.sh
+      # Flatpaks cannot see /usr/share/{themes,icons} without this.
+      - apply-flatpak-theme-access.sh
+
+  # Started for every login, present and future, so the light/dark toggle in
+  # Settings works on a machine that was set up months from now.
+  - type: systemd
+    user:
+      enabled:
+        - float-theme-sync.service

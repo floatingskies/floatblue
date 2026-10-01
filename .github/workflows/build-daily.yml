@@ -29,7 +29,7 @@ jobs:
       matrix:
         recipe:
           # !! Add your recipes here 
-          - floatfin-latest.yml
+          - floatblue-latest.yml
           - floatite.yml
     steps:
        # the build is fully handled by the reusable github action

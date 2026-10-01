@@ -1,8 +1,8 @@
 # run with --cap-add sys_admin --security-opt label=disable
 
-ARG BASE_IMAGE=${BASE_IMAGE:-ghcr.io/floatingskies/floatfin:stable}
-ARG INSTALL_IMAGE_PAYLOAD=${INSTALL_IMAGE_PAYLOAD:-ghcr.io/floatingskies/floatfin:stable}
-ARG ISO_LABEL=${ISO_LABEL:-Floatfin-Live}
+ARG BASE_IMAGE=${BASE_IMAGE:-ghcr.io/floatingskies/floatblue:stable}
+ARG INSTALL_IMAGE_PAYLOAD=${INSTALL_IMAGE_PAYLOAD:-ghcr.io/floatingskies/floatblue:stable}
+ARG ISO_LABEL=${ISO_LABEL:-Floatblue-Live}
 
 
 FROM $BASE_IMAGE

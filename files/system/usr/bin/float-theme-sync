@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+# float-theme-sync — keep the whole theme set following GNOME's light/dark
+# preference.
+#
+# GNOME's Settings -> Appearance (and the quick-settings toggle) only flips
+# `org.gnome.desktop.interface color-scheme`. By itself that is enough for
+# Adwaita, because Adwaita ships a gtk.css and a gtk-dark.css per theme
+# directory. Flat Remix does not work that way: its Light and Dark shades are
+# *separate theme directories*, and its libadwaita/ directory only has a
+# gtk.css (no gtk-dark.css), so a libadwaita app would look light either way.
+#
+# So this watches color-scheme and swaps all four layers together:
+#
+#   GTK      org.gnome.desktop.interface gtk-theme   + ~/.config/gtk-3.0/settings.ini
+#                                                          + ~/.config/gtk-4.0/settings.ini
+#   libadwaita  follows gtk-theme (picks up <theme>/libadwaita/gtk.css)
+#   Shell    org.gnome.shell.extensions.user-theme name   (needs User Themes)
+#   Icons    org.gnome.desktop.interface icon-theme
+#
+# Flatpak apps live in a sandbox with no access to the host theme dirs, so the
+# system-wide flatpak override installed at build time covers the file access
+# and GTK_THEME is re-pointed per user here.
+#
+# It runs as a per-user systemd service (enabled globally), so every login gets
+# it, and applying on start means a fresh account is themed without anyone
+# running a command.
+#
+# Consequence to be aware of: picking a theme by hand in Settings is fine until
+# the next light/dark switch, which resets it back to the Blue pair. That is
+# the intended behaviour — the toggle in Appearance is the single control.
+
+set -uo pipefail
+
+GTK_LIGHT=Flat-Remix-GTK-Blue-Light
+GTK_DARK=Flat-Remix-GTK-Blue-Dark
+ICONS_LIGHT=Flat-Remix-Blue-Light
+ICONS_DARK=Flat-Remix-Blue-Dark
+SHELL_LIGHT=Flat-Remix-Light
+SHELL_DARK=Flat-Remix-Dark
+
+SCHEMA=org.gnome.desktop.interface
+SHELL_SCHEMA=org.gnome.shell.extensions.user-theme
+SHELL_LIST_SCHEMA=org.gnome.shell
+THEMES_DIR=/usr/share/themes
+ICONS_DIR=/usr/share/icons
+
+# A shell theme is inert without this extension. It is installed as a system
+# extension by the theming recipe, but "installed" is not "enabled", and the
+# base image's own enabled-extensions list is not ours to overwrite — so the
+# UUID is appended to whatever is already enabled.
+USER_THEME_UUID=user-theme@gnome-shell-extensions.gcampari.github.com
+
+log() { printf 'float-theme-sync: %s\n' "$*" >&2; }
+
+# gsettings needs the session bus; without it (ssh, early boot, the Anaconda
+# environment) there is nothing to theme and no reason to retry.
+have_session() {
+    gsettings get "$SCHEMA" color-scheme >/dev/null 2>&1
+}
+
+# Set (or replace) a single key in an INI file, leaving every other setting the
+# user has there alone. GTK only reads settings.ini, so this is the only place
+# native GTK3/GTK4 apps look for the theme name.
+set_ini() {
+    local file=$1 key=$2 value=$3 tmp
+    mkdir -p "$(dirname "$file")"
+    if [[ -f $file ]] && grep -q "^[[:space:]]*${key}[[:space:]]*=" "$file"; then
+        tmp=$(mktemp)
+        sed -e "s|^[[:space:]]*${key}[[:space:]]*=.*|${key}=${value}|" "$file" >"$tmp"
+        cat "$tmp" >"$file"
+        rm -f "$tmp"
+    else
+        printf '%s=%s\n' "$key" "$value" >>"$file"
+    fi
+}
+
+# Put the User Themes extension in the enabled list without discarding
+# whatever the base image already enables. Adding to the array (rather than
+# setting a gschema override for enabled-extensions) is deliberate: an
+# override would replace Bluefin's own extension list wholesale.
+ensure_user_theme_enabled() {
+    [[ -d /usr/share/gnome-shell/extensions/$USER_THEME_UUID ]] || return 0
+
+    local current
+    current=$(gsettings get "$SHELL_LIST_SCHEMA" enabled-extensions 2>/dev/null || echo "@as []")
+    [[ $current == *"$USER_THEME_UUID"* ]] && return 0
+
+    # "gsettings get" prints an empty array as @as []; anything else is a
+    # non-empty list we can append to. Note the comma: dropping the closing
+    # bracket and gluing the new entry straight onto the previous one yields
+    # an invalid GVariant and the whole set is silently rejected.
+    if [[ $current == "@as []" || $current == "'@as []'" ]]; then
+        new="['$USER_THEME_UUID']"
+    else
+        new="${current%]},'$USER_THEME_UUID']"
+    fi
+
+    if gsettings set "$SHELL_LIST_SCHEMA" enabled-extensions "$new"; then
+        log "enabled $USER_THEME_UUID"
+    else
+        log "could not add $USER_THEME_UUID to enabled-extensions"
+    fi
+}
+
+apply() {
+    local scheme gtk icons shell dir
+
+    scheme=$(gsettings get "$SCHEMA" color-scheme 2>/dev/null | tr -d "'")
+    if [[ $scheme == prefer-dark ]]; then
+        gtk=$GTK_DARK icons=$ICONS_DARK shell=$SHELL_DARK
+    else
+        gtk=$GTK_LIGHT icons=$ICONS_LIGHT shell=$SHELL_LIGHT
+    fi
+
+    # Guard against a partial install: applying a theme that is not on disk
+    # leaves the session with unstyled widgets, which is worse than not
+    # switching at all.
+    dir=""
+    for candidate in "$THEMES_DIR/$gtk" "$ICONS_DIR/$icons"; do
+        [[ -d $candidate ]] && dir=1
+    done
+    if [[ -z $dir ]]; then
+        log "Flat Remix themes not found, skipping"
+        return 0
+    fi
+
+    gsettings set "$SCHEMA" gtk-theme "$gtk"
+    gsettings set "$SCHEMA" icon-theme "$icons"
+
+    # User Themes is an extension; without it the schema is absent and the
+    # shell just keeps Adwaita. That is a degraded look, not an error.
+    if gsettings list-schemas 2>/dev/null | grep -qx "$SHELL_SCHEMA"; then
+        gsettings set "$SHELL_SCHEMA" name "$shell"
+        ensure_user_theme_enabled
+    fi
+
+    local cfg=${XDG_CONFIG_HOME:-$HOME/.config}
+    set_ini "$cfg/gtk-3.0/settings.ini" gtk-theme-name "$gtk"
+    set_ini "$cfg/gtk-4.0/settings.ini" gtk-theme-name "$gtk"
+
+    if command -v flatpak >/dev/null 2>&1; then
+        flatpak override --user --filesystem=/usr/share/themes:ro \
+            --filesystem=/usr/share/icons:ro \
+            --env=GTK_THEME="$gtk" >/dev/null 2>&1 || true
+    fi
+
+    log "applied ${gtk} / ${icons} / ${shell}"
+}
+
+if ! have_session; then
+    exit 0
+fi
+
+apply
+
+# Block on the stream and re-apply on every change. gsettings monitor exits
+# non-zero if the schema goes away, in which case systemd restarts us.
+gsettings monitor "$SCHEMA" color-scheme | while read -r _; do
+    apply
+done

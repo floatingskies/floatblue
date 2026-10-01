@@ -1,24 +1,20 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/module-stage-list-v1.json
-modules:
-  - type: dnf
-    repos:
-      copr:
-        - ublue-os/packages
-    install:
-      packages:
-        - gnome-backgrounds-extras
-        - f41-backgrounds-base
-        - f40-backgrounds-base
-        - f39-backgrounds-base
-        # KDE/Plasma wallpaper collections (historic KDE + modern Plasma)
-        - kde-wallpapers
-        - plasma-workspace-wallpapers
 
+# Wallpapers: the Tails collection only.
+#
+# The Fedora, GNOME and Bluefin wallpapers are deleted by
+# install-wallpapers.sh, and so are their GNOME picker entries — otherwise the
+# picker keeps listing XMLs whose files no longer exist and shows blank
+# previews. The Tails images are baked into the image by the files module, so
+# there is no build-time download.
+#
+# Which Tails image is the default is decided by the build: every rebuild and
+# every rebase picks one at random. Both images always appear in the picker.
+#
+# This deliberately does NOT install gnome-backgrounds-extras or the
+# f39/f40/f41-backgrounds-base packages, which is what used to put Fedora's
+# wallpaper set on the image in the first place.
+modules:
   - type: script
     scripts:
-      - install-ubuntu-wallpapers.sh      
-      - install-system76-wallpaper.sh
-      - install-framework-wallpaper.sh
-      - install-kde-wallpapers.sh
-      - install-floating-skies.sh
-      - install-lake-of-sound.sh
+      - install-wallpapers.sh
