@@ -6,98 +6,113 @@ A [Bootable Container](https://containers.github.io/bootable/) image built on to
 
 The desktop layout is left stock GNOME: no Dash to Dock, no accent icons, no
 window-button reshuffling, no interface settings on top of what the base image
-ships. Only the skin changes.
+ships. Only the skin changes, and the rest of this is deliberately few.
 
-Customizations added to the image:
+## What makes it different
 
--   **Flat Remix theming**, Blue by default, across all four layers at once: GTK
-    (`Flat-Remix-GTK-Blue-Light`/`-Dark`), libadwaita, GNOME Shell
-    (`Flat-Remix-Light`/`-Dark`, via the *User Themes* extension) and icons
-    (`Flat-Remix-Blue-Light`/`-Dark`). The cursor stays **Adwaita**. Flatpak apps
-    get the same themes through a system-wide `flatpak override`. Upstream
-    tarballs are pinned to a commit, so rebuilds are reproducible.
+Most things below are table stakes for a Universal Blue image. These four are
+the reasons the image is not just Bluefin with a coat of paint.
 
--   **The light/dark toggle follows through.** GNOME's Settings → Appearance (or
-    the quick-settings toggle) swaps GTK, libadwaita, the shell theme and the
-    icons together. This needs a little help: Flat Remix ships Light and Dark as
-    *separate theme directories*, and its `libadwaita/` directory only contains a
-    `gtk.css` (no `gtk-dark.css`), so leaving it to GTK's own colour-scheme
-    handling would keep every libadwaita app light. `float-theme-sync`, a per-user
-    service enabled for every login, watches `color-scheme` and applies all four.
-    Native GTK3/GTK4 apps are covered too, via `~/.config/gtk-{3,4}.0/settings.ini`
-    seeded from `/etc/skel`.
+### The light/dark toggle moves the whole theme at once
 
--   **Tails wallpapers, picked at random per build.** The Fedora, GNOME and
-    Bluefin wallpapers are deleted along with their GNOME picker entries; the
-    Tails collection is the only one offered. Both images show up in the picker,
-    and which one is the first-boot default is decided by `RANDOM` during the
-    build, so every rebuild/rebase lands on a different one. Nothing is
-    downloaded at build time.
+Flipping GNOME's Settings → Appearance swaps GTK, libadwaita, the shell theme
+and the icon set together, and keeps swapping on every later toggle. That is
+not something the base image does, and Flat Remix specifically cannot do it on
+its own: Light and Dark ship as *separate theme directories*, and its
+`libadwaita/` directory contains only a `gtk.css` with no `gtk-dark.css`, so
+every libadwaita application would stay light no matter what `color-scheme`
+said.
 
--   **The FloatOS logo everywhere it can show up.** Shipped under the pixmap
-    filenames the base tooling already looks for (`fedora-gdm-logo.png`,
-    `fedora-logo{,-icon,-med,-small}.png`, `fedora-whitelogo-med.png`) plus both
-    Plymouth spinner watermarks, and the initramfs is regenerated so the splash
-    is branded from the first frame. The logo is square, so it is letterboxed
-    into each target box rather than squashed.
+`float-theme-sync` closes that gap. It is a per-user service enabled for every
+login — present and future accounts — that watches `color-scheme` and applies
+all four layers, including native GTK3/GTK4 applications through
+`~/.config/gtk-{3,4}.0/settings.ini` seeded from `/etc/skel`, and Flatpak apps
+through a per-user `flatpak override`. See
+[recipes/features/theming.yml](recipes/features/theming.yml).
 
--   **Secureblue-style hardening, adapted** (see
-    [recipes/features/hardening.yml](recipes/features/hardening.yml) for the full
-    list of what was left out and why): kernel/network sysctl hardening,
-    core dumps disabled, account lockout and password quality via the stock
-    `pam_faillock`/`pam_pwquality`, per-network Wi-Fi MAC randomization,
-    NTS-authenticated time, a desktop firewalld zone, and
-    `geoclue`/`passim`/`cups`/`bluetooth` off. It stops short of removing
-    `sudo`/`su`/`pkexec`, disabling Xwayland, blocking `ping`, or restricting
-    `containers/policy.json`, because this image ships Steam, a network toolset,
-    and uses podman/`bootc switch` to install and update itself.
+The skins themselves are Flat Remix, Blue, pinned to an upstream commit so
+rebuilds are reproducible. That part is interchangeable; the synchronisation
+is the point.
 
+### Hardening with the rejections written down
+
+Adapted from [secureblue](https://github.com/secureblue/secureblue), which is
+the closest thing to a reference for this. The difference is the part secureblue
+leaves out, and the fact that an i5-3550 is a stated target:
+
+-   `sudo`, `su` and `pkexec` stay. secureblue's replacement, `run0`, starts a
+    full systemd user session per call, which is visibly slow on a Sandy
+    Bridge and breaks ordinary scripting. `doas` is installed alongside sudo
+    instead — a much smaller attack surface, and not a drop-in replacement.
+-   `perf_event_paranoid` is 2, not 3, so `perf` still works on your own
+    processes.
+-   `rp_filter` is loose rather than strict; strict mode drops legitimate
+    packets on a laptop with Wi-Fi, Ethernet and a VPN.
+-   No blanket module blacklisting. secureblue blocks `squashfs`, which is
+    load-bearing for ostree and for the live ISO build.
+-   No restrictive `containers/policy.json`: podman and `bootc switch` are how
+    this image installs and updates itself.
+-   Xwayland and `ping` stay on, because the image ships Steam and a network
+    toolset.
+
+What is applied: kernel and network sysctls, core dumps off, account lockout
+and password quality through the stock `pam_faillock`/`pam_pwquality`,
+per-network Wi-Fi MAC randomisation, NTS-authenticated time, and a desktop
+firewalld zone that closes inbound connections without killing mDNS and device
+discovery. Every omission is documented inline in
+[recipes/features/hardening.yml](recipes/features/hardening.yml).
+
+### RPM only. Nothing is pushed on you
+
+No default Flatpak list, no first-boot app installer, no background service
+downloading apps on login. What a machine gets is Fedora 44's own RPM set plus
+the RPMs listed below. Flatpak and the Flathub remote are present and working
+— `float-flatpak-remote.service` keeps the remote configured at every boot,
+because a system-wide remote lives under `/var` and `bootc switch` resets it —
+but the list is yours to write.
+
+### Branded through the whole boot chain, and a wallpaper chosen by the build
+
+The FloatOS logo ships under the pixmap filenames the base tooling already
+looks for, so GDM, Settings → About and the installer pick it up by name, plus
+both Plymouth spinner watermarks, with the initramfs regenerated so the splash
+is branded from the first frame. The logo is square, so it is letterboxed into
+each target box rather than squashed.
+
+The wallpaper is the **Tails** collection and nothing else: the Fedora, GNOME
+and Bluefin wallpapers are removed along with their GNOME picker entries, and
+which Tails image is the first-boot default is decided by `RANDOM` during the
+build. Every rebuild and every rebase lands on a different one.
+
+## What it also ships
+
+Table stakes for a uBlue image, listed without further argument.
+
+-   **Flat Remix** Blue for GTK, libadwaita, shell and icons; **Adwaita** cursor
+-   **doas** and the BSD/Unix corner: `ksh` `dash` `vis` `ed` `mandoc` `bc`
+    `bats` `screen` `ltrace` `strace` `lsof` `rsync` `gawk` `mawk` `parallel`
+    and the `m4`/`autoconf`/`automake`/`libtool` chain
+-   **Network and light security tooling** from stock Fedora: `nmap` `masscan`
+    `arp-scan` `tcpdump` `wireshark-cli` `traceroute` `mtr` `iperf3` `ethtool`
+    `netcat` `socat` `gnutls-utils` `lynis` `audit` `libpwquality`. Password
+    crackers and brute-forcers are deliberately left out
+-   **A dev-ops / sysadmin / web-dev CLI toolkit**: `ansible-core` `gh`
+    `git-lfs` `jq` `shellcheck` `sshpass` `bind-utils` `htop` `iotop` `ncdu`
+    `net-tools` `sysstat` `tmux` `tree` `whois` `wget` `btop` `fd-find` `fzf`
+    `pv` `ripgrep` `nodejs` `npm` `python3-pip`
 -   **Homebrew** via `ublue-brew`, with the setup service and weekly
-    update/upgrade timers enabled.
-
--   **No Flatpaks are pushed on you.** Flatpak and the Flathub remote are there
-    and working, but the image installs no apps of its own: what you get is
-    Fedora 44's RPM set plus the RPMs listed here. Install Flatpaks yourself
-    whenever you want them.
-
--   **doas and the BSD/Unix corner of the toolbox.** `doas` (OpenBSD's privilege
-    escalation) is installed *alongside* sudo, not instead of it: it is a much
-    smaller attack surface, but it is not a drop-in replacement — no `sudo -u`,
-    and `doas.conf` is far poorer than sudoers — and this image gets used for
-    administration where Ansible and ordinary scripts assume sudo. The `wheel`
-    group gets `permit persist :wheel`. Note the package is `opendoas`, the
-    command is still `doas`. Alongside it: `ksh` (OpenBSD's shell lineage),
-    `dash` (fast POSIX sh), `vis` (BSD's vi), `ed`, `mandoc`, `bc`, `bats`,
-    `screen`, `ltrace`, `strace`, `lsof`, `rsync`, `gawk`, `mawk`, `parallel`,
-    and the `m4`/`autoconf`/`automake`/`libtool` chain. What Fedora does not
-    package — `openbsd-inetd`, `netcat-openbsd`, the NetBSD `cb-*` tools — is
-    left out because upstream does not ship it, not as an oversight.
-
--   **Network and light security tooling**, all from stock Fedora repos: `nmap`
-    `masscan` `arp-scan` `tcpdump` `wireshark-cli` `termshark` `traceroute` `mtr`
-    `iperf3` `ethtool` `netcat` `socat` `gnutls-cli` `lynis` `audit`
-    `libpwquality-tools`. Password crackers and brute-forcers are deliberately
-    left out.
-
--   **Multimedia codecs** from the negativo17 COPR: `ffmpeg`,
-    `gstreamer1-libav`, `gstreamer1-plugins-{bad,ugly}`, replacing the `-free`
-    set so H.264/AAC and the usual containers just work.
-
--   Firefox as the browser (installed from RPM)
-
--   [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html) as the font (the document font stays Adwaita Sans)
-
--   Steam installed from negativo17
-
--   The OS tells itself as *Floatblue*. Settings → About, installer branding, hostname
-
--   Bluefins *uwelcome* login banner is removed; instead the fish greeting (and `fastfetch`) shows a system summary with the Floatblue ASCII logo and a **Floatblue** title
-
--   A dev-ops / sysadmin / web-dev CLI toolkit included: `ansible-core` `gh` `git-lfs` `jq` `shellcheck` `sshpass` `bind-utils` `htop` `iotop` `iperf3` `mtr` `ncdu` `net-tools` `sysstat` `tmux` `tree` `whois` `wget` `btop` `fd-find` `fzf` `pv` `ripgrep` `nodejs` `npm` and `python3-pip`
+    update/upgrade timers
+-   **Cockpit** on `https://localhost:9090`, and **multimedia codecs** from the
+    negativo17 COPR (`ffmpeg`, `gstreamer1-libav`, `gstreamer1-plugins-{bad,ugly}`)
+    so H.264/AAC and the usual containers just work
+-   **Firefox** as the browser (RPM), **Steam** from negativo17, and
+    [Intel One Mono](https://www.intel.com/content/www/us/en/company-overview/one-monospace-font.html)
+    as the interface font
+-   The OS calls itself **Floatblue** — Settings → About, installer branding,
+    hostname — and Bluefin's *uwelcome* banner is replaced by a `fastfetch`
+    system summary
 
 From Bluefin DX you get the default developer tooling out of the box: VS Code, Docker/Podman, a Logo Menu appindicator support and the `<CTRL><ALT>t` terminal shortcut. Rootful Docker and Starship are off by default and Tailscale doesn't start automatically.
-
-Bluefins default Flatpaks still install on login; no extra Flatpaks are added to the image.
 
 ## Image Tags
 
