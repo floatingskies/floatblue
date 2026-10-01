@@ -57,40 +57,5 @@
     });
   }
 
-  /* --- Light / dark mode ------------------------------------------------------- */
-
-  function initTheme() {
-    var root = document.documentElement;
-    var btn = $id("theme-toggle");
-    var mq = window.matchMedia("(prefers-color-scheme: light)");
-    var chosen = null;
-    try { chosen = localStorage.getItem("floatblue-theme"); } catch (e) { /* private mode */ }
-
-    function apply(theme) {
-      root.setAttribute("data-theme", theme);
-      if (btn) btn.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
-    }
-
-    function current() { return root.getAttribute("data-theme") === "light" ? "light" : "dark"; }
-
-    if (chosen) apply(chosen);
-    else apply(mq.matches ? "light" : "dark");
-
-    if (btn) {
-      btn.addEventListener("click", function () {
-        var next = current() === "light" ? "dark" : "light";
-        chosen = next;
-        apply(next);
-        try { localStorage.setItem("floatblue-theme", next); } catch (e) { /* ignore */ }
-      });
-    }
-    if (mq.addEventListener) {
-      mq.addEventListener("change", function (ev) {
-        if (!chosen) apply(ev.matches ? "light" : "dark");
-      });
-    }
-  }
-
   loadCommits();
-  initTheme();
 })();

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>floatblue — a homegrown Fedora Atomic desktop</title>
   <meta name="description" content="My own Fedora Atomic desktop, built on Bluefin DX with BlueBuild. Immutable, signed, stock GNOME with Flat Remix theming and a live installer.">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#23252e">
   <link rel="icon" href="assets/favicon.png">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.github.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
@@ -15,151 +15,149 @@
 <body>
   <a class="skip-link" href="#download">Skip to download</a>
 
-  <header class="topbar">
+  <div class="topbar">
     <a class="brand" href="#top">
       <img src="assets/floatos-logo.png" alt="">
       <span>floatblue</span>
     </a>
-    <nav class="topnav">
+    <nav class="nav">
       <a href="#why">Why</a>
+      <a href="#channels">Channels</a>
       <a href="#download">Download</a>
       <a href="#install">Install</a>
       <a href="#changes">Changes</a>
       <a href="https://github.com/floatingskies/floatblue" target="_blank" rel="noopener noreferrer">GitHub</a>
-      <button id="theme-toggle" class="toggle" type="button" aria-label="Switch between day and night">day / night</button>
     </nav>
-  </header>
+  </div>
 
   <main id="top">
     <section class="hero">
       <img src="assets/floatos-logo.png" alt="The floatblue logo">
-      <p class="eyebrow">bootable containers · signed · rebuilt daily and on every push</p>
-      <h1>floatblue</h1>
-      <p class="lede">
+      <h1><span class="box">float</span> <span class="box">blue</span></h1>
+      <p class="hero-desc">
         My daily Fedora Atomic desktop, layered on
         <a href="https://projectbluefin.io" target="_blank" rel="noopener noreferrer">Bluefin DX</a>
         with <a href="https://blue-build.org" target="_blank" rel="noopener noreferrer">BlueBuild</a>.
-        A side project, not a product. It does the small things I actually want:
-        a Flat Remix skin that follows day and night, comfy fonts, useful tools,
-        and a live installer that works.
+        Immutable, signed, stock GNOME, with the Flat Remix skin following day and
+        night. A side project, not a product.
       </p>
       <div class="actions">
-        <a class="btn" href="https://github.com/floatingskies/floatblue/releases" target="_blank" rel="noopener noreferrer">Get an ISO</a>
-        <a class="muted" href="https://github.com/floatingskies/floatblue" target="_blank" rel="noopener noreferrer">view the repo</a>
+        <a class="btn btn-primary" href="https://github.com/floatingskies/floatblue/releases" target="_blank" rel="noopener noreferrer">Get an ISO</a>
+        <a class="btn" href="https://github.com/floatingskies/floatblue" target="_blank" rel="noopener noreferrer">View the repo</a>
       </div>
     </section>
 
     <section id="why">
-      <div class="wrap">
-        <p class="eyebrow">why</p>
-        <h2>A daily driver, not a project.</h2>
-        <p class="lede">
-          It started as one tiny tweak and turned into the machine I run every day.
-          Nothing here is clever, it is just the sum of small things.
-        </p>
-        <ul class="plain">
-          <li><strong>Immutable and signed.</strong> Bootable containers with clean rollbacks, verified with cosign.</li>
-          <li><strong>Stock GNOME.</strong> The layout Bluefin ships is untouched. Only the skin changes.</li>
-          <li><strong>Flat Remix, wired to day and night.</strong> GTK, libadwaita, the shell and the icons all follow the appearance toggle, in one go.</li>
-          <li><strong>Hardened without being hostile.</strong> No kexec, no restrictive container policy, io_uring off, sane ASLR. Podman and bootc still work.</li>
-          <li><strong>doas as well as sudo.</strong> A much smaller privilege escalation surface, with wheel able to persist.</li>
-          <li><strong>The Unix and BSD tools.</strong> ksh, dash, bat, exa and friends, all from stock Fedora.</li>
-          <li><strong>A real installer.</strong> Boot the ISO to try it, or install it to disk. Secure Boot works.</li>
-        </ul>
+      <div class="section-title"><span>01</span> Why</div>
+      <div class="grid">
+        <div class="card">
+          <h3>Immutable and signed</h3>
+          <p>Bootable containers with clean rollbacks, verified with cosign.</p>
+        </div>
+        <div class="card">
+          <h3>Stock GNOME</h3>
+          <p>The layout Bluefin ships is untouched. Only the skin changes.</p>
+        </div>
+        <div class="card">
+          <h3>Hardened, not hostile</h3>
+          <p>No kexec, no restrictive container policy, io_uring off. Podman and bootc still work.</p>
+        </div>
+        <div class="card">
+          <h3>doas as well as sudo</h3>
+          <p>A much smaller privilege escalation surface, with wheel able to persist.</p>
+        </div>
+        <div class="card">
+          <h3>The Unix and BSD tools</h3>
+          <p>ksh, dash, bat, exa and friends, all from stock Fedora.</p>
+        </div>
+        <div class="card">
+          <h3>A real installer</h3>
+          <p>Boot the ISO to try it, or install it to disk. Secure Boot works.</p>
+        </div>
       </div>
     </section>
 
-    <section id="editions">
-      <div class="wrap">
-        <p class="eyebrow">channels</p>
-        <h2>Three of them, off one base.</h2>
-        <p class="lede">
-          Every channel is the same overlay on Bluefin DX. Only the update cadence differs,
-          and the Fedora release each one is built against is carried by the release tag,
-          so the number in the filename is the number you will be running.
-        </p>
-        <div class="grid">
-          <div class="card">
-            <h3>stable</h3>
-            <p>Follows Bluefin's stable-weekly channel. New packages, but only after a week of
-              soak. This is the one to install.</p>
-          </div>
-          <div class="card">
-            <h3>gts</h3>
-            <p>Bluefin's ground to stable channel. Lands sooner than stable without being canary.</p>
-          </div>
-          <div class="card">
-            <h3>latest</h3>
-            <p>Daily canary. Newest packages in the base image, and the first thing to break.
-              Good for testing, not for daily use.</p>
-          </div>
+    <section id="channels">
+      <div class="section-title"><span>02</span> Channels</div>
+      <div class="grid">
+        <div class="terminal">
+<span class="k">const</span> floatblue = {<br>
+&nbsp;&nbsp;base: <span class="s">"Bluefin DX"</span>,<br>
+&nbsp;&nbsp;built: <span class="s">"BlueBuild"</span>,<br>
+&nbsp;&nbsp;channels: [<span class="s">"stable"</span>, <span class="s">"gts"</span>, <span class="s">"latest"</span>],<br>
+&nbsp;&nbsp;desktop: <span class="s">"GNOME, stock layout"</span>,<br>
+&nbsp;&nbsp;theme: <span class="s">"Flat Remix GTK-Blue"</span>,<br>
+&nbsp;&nbsp;releaseTag: <span class="s">"iso-f&lt;fedora&gt;"</span><br>
+};<br>
+<span class="c">// a versao do Fedora sai da imagem, nao do repo</span>
+        </div>
+        <div class="card">
+          <h3>Three of them, one base</h3>
+          <p>Same overlay on Bluefin DX, only the update cadence differs. The Fedora release
+            each channel is built against is carried by the release tag, so the number in
+            the filename is the number you will be running.</p>
+        </div>
+        <div class="card">
+          <h3>Pick your pace</h3>
+          <p><strong>stable</strong> follows Bluefin's stable-weekly, a week of soak first.
+            <strong>gts</strong> is ground to stable. <strong>latest</strong> is the daily
+            canary, and the first thing to break.</p>
         </div>
       </div>
     </section>
 
     <section id="download">
-      <div class="wrap">
-        <p class="eyebrow">download</p>
-        <h2>Live ISOs, tagged by Fedora version.</h2>
-        <p class="lede">
-          The <strong>Build Live ISOs</strong> workflow builds one from
-          <code>main</code> when I ask for it and publishes it as a release, tagged
-          <code>iso-f&lt;fedora&gt;</code>, with the Fedora version read out of the image
-          itself. Every ISO ships a <code>-CHECKSUM</code> file, so you can verify
-          before flashing.
-        </p>
-        <div class="actions">
-          <a class="btn" href="https://github.com/floatingskies/floatblue/releases" target="_blank" rel="noopener noreferrer">Browse the releases</a>
-          <a class="muted" href="https://github.com/floatingskies/floatblue/actions/workflows/build-iso.yml" target="_blank" rel="noopener noreferrer">or build your own</a>
-        </div>
+      <div class="section-title"><span>03</span> Download</div>
+      <p class="hero-desc">
+        The <strong>Build Live ISOs</strong> workflow builds one from <code>main</code> when I
+        ask for it and publishes it as a release, tagged <code>iso-f&lt;fedora&gt;</code>, with
+        the Fedora version read out of the image itself. Every ISO ships a
+        <code>-CHECKSUM</code> file, so you can verify before flashing.
+      </p>
+      <div class="actions">
+        <a class="btn btn-primary" href="https://github.com/floatingskies/floatblue/releases" target="_blank" rel="noopener noreferrer">Browse the releases</a>
+        <a class="btn" href="https://github.com/floatingskies/floatblue/actions/workflows/build-iso.yml" target="_blank" rel="noopener noreferrer">Build your own</a>
       </div>
     </section>
 
     <section id="install">
-      <div class="wrap">
-        <p class="eyebrow">install</p>
-        <h2>Try it live, or put it on disk.</h2>
-        <div class="grid">
-          <div class="card">
-            <h3>Try it live</h3>
-            <p>Write the ISO to a USB stick with balenaEtcher or Rufus, or on Linux and macOS:</p>
-            <pre class="code"><code>sudo dd if=floatblue-f42-live-amd64.iso \
+      <div class="section-title"><span>04</span> Install</div>
+      <div class="grid">
+        <div class="card">
+          <h3>Try it live</h3>
+          <p>Write the ISO to a USB stick with balenaEtcher or Rufus, or on Linux and macOS:</p>
+<pre><code>sudo dd if=floatblue-f42-live-amd64.iso \
   of=/dev/sdX bs=4M status=progress</code></pre>
-            <p class="hint">Find the device with <code>lsblk</code>, write the whole stick, boot from it.</p>
-          </div>
-          <div class="card">
-            <h3>Install it</h3>
-            <p>Launch <strong>Install to Disk</strong> from the live desktop. Secure Boot is supported,
-              enrol the <a href="https://docs.ublue.io" target="_blank" rel="noopener noreferrer">Universal Blue</a>
-              key or keep your own.</p>
-            <pre class="code"><code>sudo bootc switch \
+          <p class="hint">Find the device with <code>lsblk</code>, write the whole stick, boot from it.</p>
+        </div>
+        <div class="card">
+          <h3>Install it</h3>
+          <p>Launch <strong>Install to Disk</strong> from the live desktop. Secure Boot is
+            supported, enrol the
+            <a href="https://docs.ublue.io" target="_blank" rel="noopener noreferrer">Universal Blue</a>
+            key or keep your own.</p>
+<pre><code>sudo bootc switch \
   ghcr.io/floatingskies/floatblue:stable</code></pre>
-            <p class="hint">Already on an Atomic system? Then <code>systemctl reboot</code>.
-              If something feels off, pick the older boot entry.</p>
-          </div>
+          <p class="hint">Already on Atomic? Then <code>systemctl reboot</code>. If something
+            feels off, pick the older boot entry.</p>
         </div>
       </div>
     </section>
 
     <section id="changes">
-      <div class="wrap">
-        <p class="eyebrow">changes</p>
-        <h2>Latest commits.</h2>
-        <ul class="commits" id="commits" aria-live="polite">
-          <li class="hint">Loading commits…</li>
-        </ul>
-        <p class="hint foot">
-          <a href="https://github.com/floatingskies/floatblue/commits/main" target="_blank" rel="noopener noreferrer">Full changelog on GitHub</a>
-        </p>
-      </div>
+      <div class="section-title"><span>05</span> Changes</div>
+      <ul class="commits" id="commits" aria-live="polite">
+        <li class="hint">Loading commits…</li>
+      </ul>
+      <p class="foot hint">
+        <a href="https://github.com/floatingskies/floatblue/commits/main" target="_blank" rel="noopener noreferrer">Full changelog on GitHub</a>
+      </p>
     </section>
   </main>
 
   <footer>
-    <div class="wrap">
-      <p>Built by hand, one commit at a time. No tracking, no cookies, no frameworks.</p>
-      <p class="hint">An unofficial personal project. Not affiliated with Universal Blue or the Fedora Project.</p>
-    </div>
+    <p>Built by hand, one commit at a time. No tracking, no cookies, no frameworks.</p>
+    <p class="hint">An unofficial personal project. Not affiliated with Universal Blue or the Fedora Project.</p>
   </footer>
 </body>
 </html>
