@@ -23,7 +23,12 @@ modules:
         - gstreamer1-plugins-bad
         - gstreamer1-plugins-ugly
     replace:
-      - from-repo: negativo17
+      # The repo id is NOT "negativo17": fedora-negativo17.repo defines repos
+      # named fedora-multimedia, fedora-steam, fedora-nvidia and so on, and the
+      # codecs live in fedora-multimedia. The dnf module runs
+      # `dnf swap --repo <this value>`, so a wrong id fails the build with
+      # "No matching repositories for ...".
+      - from-repo: fedora-multimedia
         skip-unavailable: true
         packages:
           - old: ffmpeg-free
