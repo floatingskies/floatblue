@@ -21,3 +21,20 @@ for version in gtk-3.0 gtk-4.0; do
     fi
     echo "Seeded $dst with $THEME"
 done
+
+# Same reasoning as float-theme-sync, seeded rather than applied: a fresh
+# account has no color-scheme change to trigger anything, so the libadwaita
+# overlay has to already be sitting in the skel.
+skel=/etc/skel/.config/gtk-4.0
+if [[ -s "$src/libadwaita/gtk.css" ]]; then
+    mkdir -p "$skel"
+    cp -a "$src/libadwaita/gtk.css" "$skel/gtk.css"
+    rm -rf "${skel:?}/assets"
+    if [[ -d $src/libadwaita/assets ]]; then
+        cp -a "$src/libadwaita/assets" "$skel/assets"
+    fi
+    echo "Seeded $skel/gtk.css from the libadwaita overlay"
+else
+    echo "error: $src/libadwaita/gtk.css is missing" >&2
+    exit 1
+fi

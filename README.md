@@ -75,6 +75,20 @@ This is the part worth reading if you are copying any of this.
   `/etc/dconf/profile/user` is only written by an explicit `dconf update`. That
   script runs the update and reads the result back, so a profile that compiled
   but did not take effect fails the build instead of silently doing nothing
+* **GTK4 goes through the libadwaita half, as a user stylesheet.** Flat Remix
+  ships two different sheets and they are not the same size. `gtk-4.0/gtk.css`
+  is a 5298 line standalone sheet, `libadwaita/gtk.css` is an 83 line overlay
+  with the palette and the titlebutton rules. The standalone one does not sit
+  well with a modern libadwaita, which is the reason libadwaita exists as its
+  own directory in the first place. So the overlay gets copied into
+  `~/.config/gtk-4.0/gtk.css`, which GTK4 reads as a user stylesheet layered on
+  top of the theme, and the Flatpak apps pick it up for free because the config
+  dir is shared. It is copied again on every light/dark switch, since each
+  variant has its own copy of the overlay. Worth being precise about one thing:
+  that overlay has no dark and light mode embedded in it, no `.dark` selectors
+  and no `prefers-color-scheme`. Dark mode comes from swapping between the
+  `Flat-Remix-GTK-Blue-Light` and `Flat-Remix-GTK-Blue-Dark` variants, which is
+  what `float-theme-sync` already does
 
 ## doas and the BSD/Unix tools
 

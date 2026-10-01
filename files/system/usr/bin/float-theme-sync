@@ -139,6 +139,37 @@ ensure_user_theme_enabled() {
     fi
 }
 
+# GTK4 loads $XDG_CONFIG_HOME/gtk-4.0/gtk.css as a user stylesheet, on top of
+# whatever the theme provides. The theme's own gtk-4.0/gtk.css is a 5000 line
+# standalone sheet and it does not sit well with a modern libadwaita, which is
+# the whole reason libadwaita exists as a separate directory. So the libadwaita
+# half goes here instead: an 83 line overlay carrying the Flat Remix palette
+# and the titlebutton rules, layered over the theme, which is the shape
+# libadwaita was designed for.
+#
+# It lands in the shared config dir, so flatpaks pick it up as well without
+# needing an override of their own. Re-copying on every switch is what keeps
+# light and dark in step, since each variant ships its own copy of the overlay
+# and the two are not interchangeable.
+install_user_stylesheet() {
+    local theme=$1 src=$THEMES_DIR/$1/libadwaita dst=$2
+
+    if [[ ! -s $src/gtk.css ]]; then
+        log "no libadwaita/gtk.css in $theme, leaving the user stylesheet alone"
+        return 0
+    fi
+
+    mkdir -p "$dst"
+    cp -a "$src/gtk.css" "$dst/gtk.css"
+
+    # The overlay points at assets/ by relative path, so the directory has to
+    # travel with it or the window controls render bare.
+    if [[ -d $src/assets ]]; then
+        rm -rf "${dst:?}/assets"
+        cp -a "$src/assets" "$dst/assets"
+    fi
+}
+
 apply() {
     local scheme gtk icons shell cfg
 
@@ -157,6 +188,7 @@ apply() {
         gsettings set "$SCHEMA" gtk-theme "$gtk"
         set_ini "$cfg/gtk-3.0/settings.ini" gtk-theme-name "$gtk"
         set_ini "$cfg/gtk-4.0/settings.ini" gtk-theme-name "$gtk"
+        install_user_stylesheet "$gtk" "$cfg/gtk-4.0"
     else
         log "GTK theme missing at $THEMES_DIR/$gtk, leaving GTK alone"
         gtk=""
