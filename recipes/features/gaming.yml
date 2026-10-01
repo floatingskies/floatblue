@@ -1,0 +1,44 @@
+# Gaming, for the hardware this image actually targets.
+#
+# Regata OS does the on-demand part: GameMode raises the governor and re-nices
+# a game while it runs and puts everything back when it exits. That fits here,
+# because this machine is deliberately kept cool and quiet rather than pinned
+# at the performance governor between games.
+#
+# What is deliberately NOT here: gamescope, MangoHud and anything else Vulkan.
+# The reference machine has a Sandy Bridge iGPU, which predates Vulkan in Mesa
+# entirely, so a Vulkan compositor either refuses to start or drops to software
+# Vulkan and lands slower than the plain OpenGL path it replaced. Shipping them
+# would be promising something the hardware cannot deliver. Install them yourself
+# if you ever move to a GPU from Haswell on, which is where Vulkan starts.
+#
+# The two sysctls relaxed in 70-float-gaming.conf are not about graphics at all:
+# Wine and Proton need io_uring for ordinary file I/O, and DXVK reserves very
+# large regions to emulate 64-bit addressing, which the hardening value of 32
+# randomised bits leaves too little room for. Both are called out in the README.
+
+modules:
+  - type: dnf
+    install:
+      packages:
+        # No GPU requirement: a governor and a nice value are all it does.
+        - gamemode
+        # udev rules for controllers, headsets and the Steam Deck's buttons.
+        - steam-devices
+
+  - type: files
+    files:
+      - source: system/usr/lib/sysctl.d/70-float-gaming.conf
+        destination: /usr/lib/sysctl.d/70-float-gaming.conf
+      - source: system/etc/gamemode.ini
+        destination: /etc/gamemode.ini
+
+  - type: script
+    scripts:
+      - ublue-disable-steam-autostart.sh
+      - apply-gaming-tuning.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - gamemoded.service

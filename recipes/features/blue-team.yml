@@ -1,0 +1,46 @@
+# For defending the machine.
+#
+# The hardening recipe already restricts what it can and audispd is installed,
+# but nothing was watching any of it. This adds the detection side, and it
+# installs the auditing tools without arming the ones that can lock you out.
+#
+# Two deliberate non-decisions:
+#
+#   usbguard is configured but not enabled. A policy that blocks the wrong USB
+#   class takes your keyboard with it, and that is the same reasoning as leaving
+#   the PAM stacks alone: a hardening measure that locks the owner out is worse
+#   than the thing it prevents. Read the policy before you turn it on.
+#
+#   fwupd is not re-enabled here. The low-end profile turns its daemon off
+#   because it wakes on a timer forever, and the right answer on a small machine
+#   is fwupdmgr run by hand. Two recipes fighting over one unit is also a build
+#   ordering hazard worth avoiding.
+
+modules:
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        # File integrity. The database is not built at image build time on
+        # purpose, aideinit walks the whole filesystem and would add minutes to
+        # every build and a large database to the image. Run `sudo aideinit`
+        # once after installing.
+        - aide
+        # Scanning
+        - yara
+        - clamav
+        - clamav-update
+        # Network IDS, for watching what actually crosses the wire
+        - suricata
+
+  - type: files
+    files:
+      - source: system/etc/audit/rules.d/60-float-blue-team.rules
+        destination: /etc/audit/rules.d/60-float-blue-team.rules
+      - source: system/etc/usbguard/rules.conf
+        destination: /etc/usbguard/rules.conf
+
+  - type: systemd
+    system:
+      enabled:
+        - auditd.service

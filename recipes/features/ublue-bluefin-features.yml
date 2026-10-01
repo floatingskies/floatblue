@@ -7,6 +7,11 @@ modules:
   - from-file: features/theming.yml
   - from-file: features/wallpapers.yml
   - from-file: features/hardening.yml
+  - from-file: features/low-end.yml        # 3 to 4 GB target, no Vulkan anywhere
+  - from-file: features/gaming.yml          # GameMode only, Vulkan tools deliberately absent
+  - from-file: features/creative.yml        # raster, vector, 3D, colour management
+  - from-file: features/developer.yml       # debuggers, formatters, containers
+  - from-file: features/blue-team.yml       # detection side of the hardening
   - from-file: features/networking.yml
   - from-file: features/unix-tooling.yml
   - from-file: features/cockpit.yml

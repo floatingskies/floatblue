@@ -1,0 +1,39 @@
+# Audit rules for the hardening this image applies.
+#
+# The hardening recipe tightens a set of sysctls and disables services. Nothing
+# was watching any of it, so a machine that fell back to those settings, or that
+# had something read the files it should not have, left no trace.
+#
+# These watch for change, not for the values themselves. Reading
+# /proc/sys/kernel/io_uring_disabled is cheap and common enough that auditing
+# every read would bury the signal.
+
+# The sysctl hardening file. Anything rewriting it is either debugging or undoing.
+-w /usr/lib/sysctl.d/60-float-hardening.conf -p wa -k float-hardening
+-w /etc/sysctl.d/ -p wa -k float-hardening
+
+# The dconf database, which is where the extension list and the greeter theme
+# live. Rewriting it means extensions come and go without anyone doing it.
+-w /etc/dconf/db/ -p wa -k float-desktop
+-w /etc/dconf/profile/ -p wa -k float-desktop
+
+# The per-user GTK config that float-theme-sync writes.
+-w /usr/bin/float-theme-sync -p wa -k float-theme
+-w /etc/gamemode.ini -p wa -k float-gaming
+-w /etc/zram-generator.conf -p wa -k float-low-end
+
+# The usbguard policy. Armed or not, a rewrite is worth knowing about.
+-w /etc/usbguard/rules.conf -p wa -k float-usbguard
+
+# Privilege escalation that is not sudo or doas.
+-w /etc/sudoers -p wa -k float-privesc
+-w /etc/sudoers.d/ -p wa -k float-privesc
+-w /etc/doas.conf -p wa -k float-privesc
+
+# Any setuid binary appearing, which is the usual shape of a persistence attempt.
+-w /usr/bin/ -p wa -a always,exit -F arch=b64 -S execve -F euid=0 -F auid>=1000 -F auid!=4294967295 -k float-setuid
+
+# Group and shadow changes.
+-w /etc/group -p wa -k float-identity
+-w /etc/shadow -p wa -k float-identity
+-w /etc/gshadow -p wa -k float-identity

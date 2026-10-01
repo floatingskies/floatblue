@@ -3,12 +3,99 @@
 
 My own Fedora Atomic desktop, built on top of [Bluefin DX](https://projectbluefin.io) with [BlueBuild](https://blue-build.org).
 
-It is mostly two things. A system that is locked down but still gets out of my
-way, and a pile of the Unix and BSD tools I keep reaching for and Fedora does
-not ship. Everything else is small.
+It is mostly three things. A system that is locked down but still gets out of my
+way, a machine that stays usable on hardware that is not fast, and a pile of the
+Unix and BSD tools I keep reaching for and Fedora does not ship.
 
-The desktop itself is stock GNOME. No dock, no accent icons, no window button
-shuffling, nothing like that. Just the skin.
+The desktop itself is stock GNOME. Dash to Dock and AppIndicator come from the
+Bluefin base and I left them alone, because they are how I actually use a
+machine. Blur My Shell is off. The skin is Flat Remix and nothing else moves.
+
+## Small and old machines
+
+The target is 3 to 4 GB of RAM on something like an i5-3550. That is a Sandy
+Bridge part: no AVX2, and an integrated GPU from before Vulkan existed. The
+whole low-end profile follows from those two facts.
+
+**No Vulkan anywhere.** A pre-Haswell iGPU has no Vulkan driver in Mesa, so
+anything built around it either refuses to start or falls back to software
+Vulkan and ends up slower than the OpenGL path it replaced. Gamescope and
+MangoHud are deliberately absent, and so is gamescope being the session
+compositor. That is the one place I knowingly left performance on the table: on
+a GPU from Haswell on, install both and you get a better experience. On this
+hardware you would get a slower one.
+
+**zram, half of RAM and never over 2 GB.** Compressed swap in RAM, so the
+machine never reaches for the disk. This is the single biggest win at 4 GB,
+because swapping on an older or spinning disk is where a responsive desktop
+turns into a slideshow. It also inverts the usual advice: `vm.swappiness` is
+raised to 180, because being reluctant to use a swap that lives in RAM and is
+compressed just wastes memory that could hold something useful.
+
+**earlyoom instead of the kernel OOM killer.** When memory runs out, earlyoom
+kills the biggest process and tells you which one. The kernel OOM killer picks
+something at random and, on a desktop, that is often the session.
+
+**GNOME's file indexer is off.** `tracker-miners-fs3` is idle most of the time
+and resident all of the time. On 4 GB that is a poor trade. PackageKit, the daily
+dnf metadata refresh, `man-db` and `plocate` are off for the same reason.
+
+**Shell animations off, system-wide.** Not a subtle preference on a software or
+weak GPU. Every window open, every workspace switch and every notification is a
+full screen repaint. `float-theme-sync` owns the themes, so this lives in its own
+dconf keyfile and nothing else is written there.
+
+**Laptop mode and smaller dirty ratios.** Writeback sooner and in smaller bursts,
+so an older disk is not asked to absorb a large buffer all at once and stall
+while it does.
+
+Nothing here assumes a discrete GPU. Mesa's software rasteriser has to be present
+and `apply-low-end-tuning.sh` fails the build if it is not, because a machine
+with no working GL driver has no desktop at all.
+
+### What the gaming profile does and does not do
+
+GameMode is installed and set up the way Regata OS sets it up: on demand. It
+raises the governor and re-nices a game while the game runs, and puts everything
+back when it exits. Nothing keeps the CPU pinned at performance between games,
+which is deliberate on a machine that also has to stay cool and quiet.
+
+Two sysctls from the hardening set genuinely block games, and
+`70-float-gaming.conf` relaxes them. This is a real trade and I would rather
+write it down than hide it:
+
+- `kernel.io_uring_disabled` goes from 2 to 1. It is off on the grounds that it
+  has a long history of kernel bugs, which is fair, but Wine and Proton use it
+  for ordinary file I/O and a good number of titles will not launch without it.
+  1 keeps the syscall behind a permission check instead of removing it.
+- `vm.mmap_rnd_bits` goes from 32 back to 28, the upstream default. 32 leaves
+  too little address space for the very large reservations DXVK makes to
+  emulate 64-bit addressing, and some of those allocations simply fail.
+
+Nothing in the gaming profile touches kexec, BPF, userfaultfd, `tcp_timestamps`
+or the ASLR setting itself. `apply-gaming-tuning.sh` checks that those are still
+where the hardening file put them, so a typo in the gaming drop-in cannot
+quietly take one down with it.
+
+### Design, development, and defending
+
+`creative.yml` is raster, vector, 3D and colour management, plus a fontconfig
+drop-in that forces antialiasing and hinting on and rejects bitmap fonts. It
+deliberately rejects only `.pcf` and `.bdf`, never TrueType or OpenType, since
+rejecting those would leave very little to draw text with.
+
+`developer.yml` is the things you only notice missing in the middle of a task:
+git-delta, shfmt, pre-commit, direnv, bat, hyperfine, gdb, valgrind, bpftool,
+podman-compose, buildah. No editor and no IDE, because on 4 GB an IDE would cost
+more than everything else here put together and Bluefin DX already brings one.
+
+`blue-team.yml` is the detection side of the hardening. AIDE for file integrity,
+YARA and ClamAV for scanning, Suricata for the wire, and audit rules that watch
+the sysctl drop-in, the dconf database, the sudoers and doas files and the
+setuid bits. Two things it installs without arming: usbguard, because a policy
+that blocks the wrong USB class takes your keyboard with it, and AIDE's database,
+because `aideinit` walks the whole filesystem and would add minutes to every
+build. Run `sudo aideinit` once.
 
 ## Security
 
@@ -156,10 +243,18 @@ write.
 * **The logo.** Shipped under the pixmap file names the base tooling already
   looks for, plus both Plymouth watermarks, with the initramfs rebuilt so the
   splash is branded from the very first frame
-* **Wallpapers.** Just the Tails collection. The Fedora, GNOME and Bluefin ones
-  are gone along with their entries in the picker, and which Tails image is the
-  default gets decided by `RANDOM` during the build, so every rebuild lands on
-  a different one
+* **Wallpapers.** Two collections. Floatblue is nine patterns drawn from the
+  Flat Remix palette, each rendered for light and for dark, with the logo placed
+  differently in each. Tails is the older set, kept because it sits well with the
+  rest of the desktop, and because having images with no light and dark split at
+  all is worth having in the picker. The Fedora, GNOME and Bluefin collections
+  are gone along with their entries in the picker.
+  Which wallpaper becomes the default gets decided by `RANDOM` during the build,
+  across both collections. A Floatblue pattern is drawn as a light and a dark
+  variant of itself rather than one image for both appearances, since the desktop
+  already follows the day and night switch. A Tails image has no pair and is
+  used for both. `generate-floatblue-wallpapers.py` sits next to them so the set
+  can be regenerated.
 * **Homebrew** via `ublue-brew`, with the setup service and the weekly update
   and upgrade timers
 * **Codecs** from the negativo17 COPR (`ffmpeg`, `gstreamer1-libav`,

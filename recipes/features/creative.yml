@@ -1,0 +1,40 @@
+# For design work: raster, vector, 3D, and the colour management to go with them.
+#
+# Every dnf module here is skip-unavailable. Package sets move between Fedora
+# releases and a missing editor should not cost you the whole image, which is
+# the same reason the theming and unix-tooling modules work that way.
+
+modules:
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        # Raster
+        - gimp
+        - krita
+        - darktable
+        - rawtherapee
+        - digikam
+        # Vector
+        - inkscape
+        - scribus
+        # 3D
+        - blender
+        # Colour management. colord is the daemon, the icc profiles are what it
+        # actually needs to map anything, and without them it guesses.
+        - colord
+        - colord-icc-profiles-free
+        # Batch and metadata
+        - ImageMagick
+        - GraphicsMagick
+        - perl-Image-ExifTool
+        - file-roller
+
+  - type: files
+    files:
+      - source: system/etc/fontconfig/conf.d/62-float-design.conf
+        destination: /etc/fontconfig/conf.d/62-float-design.conf
+
+  - type: script
+    scripts:
+      - apply-design-tuning.sh

@@ -1,0 +1,36 @@
+# For working on code.
+#
+# devops.yml already has the day to day kit: git, gh, jq, tmux, fzf, ripgrep,
+# btop, ansible. This adds the things you only notice are missing when you are
+# actually in the middle of something.
+#
+# No editor and no IDE. On a machine with 3 to 4 GB of RAM, preinstalling a full
+# IDE would cost more than everything else here put together, and Bluefin DX
+# already brings a working one.
+
+modules:
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        # Reading diffs and formatting files
+        - git-delta
+        - shfmt
+        - pre-commit
+        - direnv
+        # Small, fast replacements that you use every day
+        - bat
+        - hyperfine
+        # Debugging and profiling
+        - gdb
+        - valgrind
+        - bpftool
+        # Containers, for the build-and-test loop
+        - podman-compose
+        - buildah
+        # Runtimes. These are the heavy ones: golang and rust together are a
+        # couple of gigabytes on disk. Nothing here reserves memory, it just
+        # sits there, so it is a disk trade rather than a RAM one.
+        - golang
+        - rust
+        - delve

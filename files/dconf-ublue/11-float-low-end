@@ -1,0 +1,13 @@
+# Shell animations off, as a system default, so a new account gets it and an
+# existing one gets it on next login.
+#
+# On a software rasteriser or a weak iGPU this is not a subtle preference. Every
+# window open and close, every workspace switch and every notification is a
+# full screen repaint, and the animations turn a responsive machine into one
+# that feels like it is running through syrup. Nothing is lost: the compositor
+# still animates as fast as it can draw.
+#
+# Nothing else is set here on purpose. The window theme and icon theme are
+# owned by float-theme-sync, and writing a value here would fight it.
+[org/gnome/desktop/interface]
+enable-animations=false

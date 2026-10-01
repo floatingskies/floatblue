@@ -1,0 +1,79 @@
+# For small and old machines. The target is 3 to 4 GB of RAM on something like
+# an i5-3550, which is a Sandy Bridge part: no AVX2, and an integrated GPU from
+# before Vulkan existed at all.
+#
+# That last part is the reason there is no Vulkan anywhere in this profile. A
+# pre-Haswell iGPU has no Vulkan driver in Mesa, so anything built around it
+# either does not run or falls back to software Vulkan and is slower than what
+# it replaced. The image therefore stays on OpenGL through llvmpipe when the
+# hardware cannot help, and nothing here assumes a discrete GPU.
+#
+# The wins, in order of how much they actually matter on 4 GB:
+#
+#   zram          swap compressed in RAM, so the machine never reaches for the
+#                 disk and never enters the multi-second freeze that swapping
+#                 on a spinning disk or a slow SSD causes
+#   earlyoom      kills the biggest process with a visible warning instead of
+#                 the kernel OOM killer picking something at random and
+#                 leaving you at a black screen with no idea what happened
+#   tracker       GNOME's file indexer is idle most of the time and resident
+#                 all of the time, which is a poor trade on 4 GB
+#   animations    shell animations are pure cost on a software or weak GPU
+#   dirty ratios  less writeback buffering, fewer stalls on a slow disk
+#   laptop_mode   longer writeback intervals, so an HDD is not woken constantly
+
+modules:
+  # Deliberately not skip-unavailable. These three are what the guarantees in
+  # this profile rest on: without zram the machine goes back to swapping on
+  # disk, without earlyoom an OOM kill is silent, and without the rasteriser a
+  # machine with no usable GL driver has no desktop at all. A build that silently
+  # dropped them would look fine and ship a machine that does not meet the
+  # target, so it fails here instead.
+  - type: dnf
+    install:
+      packages:
+        - zram-generator
+        - earlyoom
+        - mesa-dri-drivers
+
+  - type: dnf
+    install:
+      skip-unavailable: true
+      packages:
+        # The software rasteriser and the loader that makes it the fallback.
+        # On hardware with no usable GL driver this is what draws the desktop.
+        - mesa-libGL
+        - libglvnd
+        - llvmpipe
+
+  - type: files
+    files:
+      - source: system/usr/lib/sysctl.d/70-float-low-memory.conf
+        destination: /usr/lib/sysctl.d/70-float-low-memory.conf
+      - source: system/etc/zram-generator.conf
+        destination: /etc/zram-generator.conf
+      - source: system/etc/systemd/journald.conf.d/60-float-low-end.conf
+        destination: /etc/systemd/journald.conf.d/60-float-low-end.conf
+      - source: dconf-ublue/11-float-low-end
+        destination: /etc/dconf/db/distro.d/11-float-low-end
+
+  - type: script
+    scripts:
+      - apply-low-end-tuning.sh
+
+  - type: systemd
+    system:
+      enabled:
+        - earlyoom.service
+      disabled:
+        # Resident all the time, useful on a big machine, dead weight here.
+        - tracker-miners-fs3.service
+        - tracker-miners-fs3-monitor.service
+        # Periodic package work that can spike CPU and IO for no benefit.
+        - packagekit.service
+        - dnf-makecache.timer
+        - man-db.timer
+        - plocate-update.timer
+        # Firmware updates still work, you just run fwupdmgr by hand. The
+        # daemon otherwise sits there waking on a timer forever.
+        - fwupd.service
