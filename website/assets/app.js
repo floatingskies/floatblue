@@ -1,6 +1,6 @@
 /* floatblue — website behavior
-   Static front-end: lists recent commits from the public GitHub API and
-   links to the monthly ISO releases on Google Drive.
+   Static front-end: lists recent commits from the public GitHub API. The ISOs
+   live in the repository's GitHub releases, so there is nothing to host here.
    No secrets, no tracking, no frameworks. All text is inserted via textContent. */
 
 (function () {
@@ -8,10 +8,6 @@
 
   var REPO = "floatingskies/floatblue";
   var API = "https://api.github.com/repos/" + REPO;
-
-  // TODO: replace with the public link to your Google Drive ISO folder once
-  // you create it (a folder share link, not a file link).
-  var GDRIVE_URL = "";
 
   function $id(id) { return document.getElementById(id); }
 
@@ -26,20 +22,6 @@
         return res.json();
       }
     );
-  }
-
-  /* --- Download ---------------------------------------------------- */
-
-  function initDrive() {
-    var link = $id("drive-link");
-    var hint = $id("drive-hint");
-    if (!link) return;
-    if (GDRIVE_URL) {
-      link.href = GDRIVE_URL;
-    } else {
-      link.style.display = "none";
-      if (hint) hint.removeAttribute("hidden");
-    }
   }
 
   /* --- Latest commits -------------------------------------------------- */
@@ -73,22 +55,6 @@
     }).catch(function () {
       list.textContent = "Could not reach GitHub right now.";
     });
-  }
-
-  /* --- Reveal on scroll ------------------------------------------------------- */
-
-  function initReveal() {
-    var nodes = document.querySelectorAll(".reveal");
-    if (!("IntersectionObserver" in window)) {
-      nodes.forEach(function (n) { n.classList.add("in"); });
-      return;
-    }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (e) {
-        if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
-    nodes.forEach(function (n) { io.observe(n); });
   }
 
   /* --- Light / dark mode ------------------------------------------------------- */
@@ -125,8 +91,6 @@
     }
   }
 
-  initDrive();
   loadCommits();
-  initReveal();
   initTheme();
 })();
