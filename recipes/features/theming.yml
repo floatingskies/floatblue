@@ -36,6 +36,7 @@ modules:
       - install-flat-remix-themes.sh
       - enable-user-theme-systemwide.sh
       - seed-user-theme.sh
+      - apply-logo-menu-brand.sh
       - apply-desktop-dconf.sh
       - apply-flatpak-theme-access.sh
 
