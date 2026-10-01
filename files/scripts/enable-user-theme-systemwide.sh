@@ -41,28 +41,47 @@ echo "  User Themes is $UUID"
 
 # ------------------------------------------------------------- the base list
 #
-# The list is merged, never replaced: dash-to-dock, appindicator and the rest
-# come from the base image and this file is named to be merged last, so
-# whatever we write wins for accounts with no value of their own.
+# The list is merged, never replaced, but that is only a safety measure when
+# there is something to lose. Three sources are tried, because which one the
+# base image uses is not this script's decision to make:
 #
-# Reading it is the part that needs care. The base does not put
-# enabled-extensions in a dconf keyfile, it sets it as a compiled gschema
-# default, so scanning the keyfiles alone finds nothing. That is exactly what
-# happened: the script fell through to an empty base list and wrote a bare
-# ['user-theme@...'], which turns the base image's extensions off for everyone.
+#   1. gsettings, inside a throwaway session bus. The effective value, whatever
+#      sets it.
+#   2. the dconf keyfiles under /etc/dconf/db.
+#   3. the glib schema overrides. Bluefin in particular enables its extensions
+#      that way rather than through dconf, so a dconf-only scan finds nothing.
 #
-# Ask gsettings first, inside a throwaway session bus, because that returns the
-# effective value whatever sets it. Only if that is unavailable fall back to
-# walking the keyfiles.
-current=$(dbus-run-session -- gsettings get org.gnome.shell enabled-extensions 2>/dev/null || true)
-source_note="gsettings"
+# And when all three come back empty that is not an error. It means the base
+# image enables nothing, so the list written below is not replacing anything, it
+# is only adding User Themes. Refusing to write in that case is what broke the
+# Silverblue build: stock GNOME has no extension list at all and there was
+# nothing to protect in the first place.
+#
+# The guard that matters is the one after the merge: everything that was in the
+# base list still has to be in the merged one.
 
-if [[ -z $current || $current == "@as []" || $current == "'@as []'" ]]; then
-    source_note="dconf keyfiles"
-    current=""
+empty_list() {
+    [[ -z ${1:-} || $1 == "@as []" || $1 == "'@as []'" ]]
+}
+
+current=""
+source_note=""
+
+got=$(dbus-run-session -- gsettings get org.gnome.shell enabled-extensions 2>/dev/null || true)
+if ! empty_list "$got"; then
+    current=$got
+    source_note="gsettings"
+fi
+
+if empty_list "$current"; then
     while read -r f; do
         [[ -n $f ]] || continue
-        current=$(sed -nE "s/^\s*enabled-extensions\s*=\s*(.*)$/\1/p" "$f" | tail -1)
+        v=$(sed -nE "s/^\s*enabled-extensions\s*=\s*(.*)$/\1/p" "$f" | tail -1)
+        if ! empty_list "$v"; then
+            current=$v
+            source_note="dconf keyfile ${f##*/}"
+            break
+        fi
     done < <(
         for dir in "$DBDIR"/*.d; do
             [[ -d $dir ]] || continue
@@ -73,13 +92,27 @@ if [[ -z $current || $current == "@as []" || $current == "'@as []'" ]]; then
     )
 fi
 
-if [[ -z $current || $current == "@as []" || $current == "'@as []'" ]]; then
-    echo "error: could not read the base enabled-extensions list from gsettings or $DBDIR" >&2
-    echo "       refusing to write a bare ['$UUID'], which would disable every" >&2
-    echo "       extension the base image ships" >&2
-    exit 1
+if empty_list "$current"; then
+    for f in /usr/share/glib-2.0/schemas/*.gschema.override; do
+        [[ -f $f ]] || continue
+        v=$(sed -nE "s/^\s*enabled-extensions\s*=\s*(.*)$/\1/p" "$f" | tail -1)
+        if ! empty_list "$v"; then
+            current=$v
+            source_note="gschema override ${f##*/}"
+            break
+        fi
+    done
 fi
-echo "  base list ($source_note): $current"
+
+if empty_list "$current"; then
+    echo "  no base extension list anywhere: this image enables nothing to preserve"
+    # [] and not @as []: this value is handed to the parser below, and @as [] is
+    # how gsettings prints an empty list, not how a list is spelled.
+    current="[]"
+    source_note="none, starting from empty"
+else
+    echo "  base list ($source_note): $current"
+fi
 
 merged=$(python3 - "$UUID" "$current" <<'PY'
 import re
@@ -89,8 +122,17 @@ uuid, raw = sys.argv[1], sys.argv[2].strip()
 if not (raw.startswith("[") and raw.endswith("]")):
     sys.exit("cannot parse enabled-extensions: %r" % raw)
 
+# gsettings spells entries as ['a', 'b']. Handwritten keyfiles and overrides
+# often skip the quotes and write [a, b], so accept both rather than dying on
+# a list that is perfectly readable.
 entries = re.findall(r"'((?:[^'\\]|\\.)*)'", raw)
 if not entries:
+    body = raw.strip()[1:-1].strip()
+    entries = [e.strip() for e in body.split(",") if e.strip()] if body else []
+
+# An empty list is a real thing to merge into, it just means the base image
+# enables no extensions. Only a non-empty list that parses to nothing is broken.
+if not entries and raw.strip() != "[]":
     sys.exit("no entries parsed out of enabled-extensions: %r" % raw)
 
 for e in entries:
@@ -126,7 +168,11 @@ print(' '.join(re.findall(r\"'((?:[^'\\\\]|\\\\.)*)'\", raw)))" "$current"); do
         exit 1
     fi
 done
-echo "  every extension from the base survived the merge"
+if [[ $current == "[]" ]]; then
+    echo "  base had no extensions, nothing to lose in the merge"
+else
+    echo "  every extension from the base survived the merge"
+fi
 
 if command -v dconf >/dev/null 2>&1; then
     dconf update
