@@ -48,7 +48,23 @@ ICONS_DIR=/usr/share/icons
 # extension by the theming recipe, but "installed" is not "enabled", and the
 # base image's own enabled-extensions list is not ours to overwrite — so the
 # UUID is appended to whatever is already enabled.
-USER_THEME_UUID=user-theme@gnome-shell-extensions.gcampari.github.com
+# Resolved from metadata.json at run time instead of written down here. It was
+# wrong once, gcampari rather than gcampax, and since an unknown uuid in the
+# extension list is not an error the shell simply never loaded anything and
+# nothing said why.
+find_user_theme_uuid() {
+    local meta
+    for meta in /usr/share/gnome-shell/extensions/*/metadata.json; do
+        [[ -f $meta ]] || continue
+        if grep -qE '"name"[[:space:]]*:[[:space:]]*"User Themes"' "$meta"; then
+            sed -n 's/.*"uuid"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$meta" | head -1
+            return 0
+        fi
+    done
+    return 1
+}
+
+USER_THEME_UUID=$(find_user_theme_uuid || true)
 
 log() { printf 'float-theme-sync: %s\n' "$*" >&2; }
 
@@ -116,7 +132,10 @@ set_ini() {
 # setting a gschema override for enabled-extensions) is deliberate: an
 # override would replace Bluefin's own extension list wholesale.
 ensure_user_theme_enabled() {
-    [[ -d /usr/share/gnome-shell/extensions/$USER_THEME_UUID ]] || return 0
+[[ -n $USER_THEME_UUID ]] || {
+    log "no User Themes extension found, cannot enable it"
+    return 0
+}
 
     local current
     current=$(gsettings get "$SHELL_LIST_SCHEMA" enabled-extensions 2>/dev/null || echo "@as []")

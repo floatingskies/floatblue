@@ -4,60 +4,90 @@
 #
 # float-theme-sync also enables it, but it runs after the session starts, and
 # gnome-shell has already read its extension list by then. An extension enabled
-# mid session is not loaded until the shell restarts, which means the shell
+# mid session is not loaded until the shell restarts, which is why the shell
 # theme only showed up on the second login. Writing the key into the system
 # database instead gets it read at shell startup, so it works on the first one.
-#
-# The list is merged rather than replaced. The base image enables dash-to-dock,
-# appindicator and the rest through its own dconf files, and this file is named
-# so it is merged last, which means whatever is written here wins for accounts
-# with no value of their own. Hardcoding a list would quietly take the dock
-# down, so the base list is read back and appended to instead.
 
 set -euo pipefail
 
-UUID=user-theme@gnome-shell-extensions.gcampari.github.com
 DBDIR=/etc/dconf/db
 TARGET="$DBDIR/distro.d/10-float-shell-extensions"
+EXTDIR=/usr/share/gnome-shell/extensions
 
-if [[ ! -d $DBDIR ]]; then
-    echo "error: $DBDIR does not exist" >&2
+# ---------------------------------------------------------------- the uuid
+#
+# Do not hardcode this. It was wrong once already: the name was written as
+# user-theme@gnome-shell-extensions.gcampari.github.com, while the extension
+# BlueBuild actually installs is gcampax. Nothing complained, the key was
+# written, dconf compiled it and the shell silently never loaded anything,
+# because an unknown uuid in the list is not an error.
+#
+# metadata.json is what the extension itself declares, so ask it.
+UUID=""
+for meta in "$EXTDIR"/*/metadata.json; do
+    [[ -f $meta ]] || continue
+    if grep -qE '"name"[[:space:]]*:[[:space:]]*"User Themes"' "$meta"; then
+        UUID=$(sed -n 's/.*"uuid"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$meta" | head -1)
+        [[ -n $UUID ]] && break
+    fi
+done
+
+if [[ -z $UUID ]]; then
+    echo "error: no extension declaring itself \"User Themes\" under $EXTDIR" >&2
+    echo "       the gnome-extensions module must run before this script" >&2
     exit 1
 fi
+echo "  User Themes is $UUID"
 
-# dconf merges every *.d directory in sorted order, and inside a directory the
-# files in sorted order, later winning. The same walk collects the keyfile that
-# currently has the final word on this key.
-mapfile -t sources < <(
-    for dir in "$DBDIR"/*.d; do
-        [[ -d $dir ]] || continue
-        for f in "$dir"/*; do
-            [[ -f $f ]] || continue
-            if grep -qE '^\s*enabled-extensions\s*=' "$f" 2>/dev/null; then
-                printf '%s\n' "$f"
-            fi
+# ------------------------------------------------------------- the base list
+#
+# The list is merged, never replaced: dash-to-dock, appindicator and the rest
+# come from the base image and this file is named to be merged last, so
+# whatever we write wins for accounts with no value of their own.
+#
+# Reading it is the part that needs care. The base does not put
+# enabled-extensions in a dconf keyfile, it sets it as a compiled gschema
+# default, so scanning the keyfiles alone finds nothing. That is exactly what
+# happened: the script fell through to an empty base list and wrote a bare
+# ['user-theme@...'], which turns the base image's extensions off for everyone.
+#
+# Ask gsettings first, inside a throwaway session bus, because that returns the
+# effective value whatever sets it. Only if that is unavailable fall back to
+# walking the keyfiles.
+current=$(dbus-run-session -- gsettings get org.gnome.shell enabled-extensions 2>/dev/null || true)
+source_note="gsettings"
+
+if [[ -z $current || $current == "@as []" || $current == "'@as []'" ]]; then
+    source_note="dconf keyfiles"
+    current=""
+    while read -r f; do
+        [[ -n $f ]] || continue
+        current=$(sed -nE "s/^\s*enabled-extensions\s*=\s*(.*)$/\1/p" "$f" | tail -1)
+    done < <(
+        for dir in "$DBDIR"/*.d; do
+            [[ -d $dir ]] || continue
+            for f in "$dir"/*; do
+                [[ -f $f ]] && grep -qE '^\s*enabled-extensions\s*=' "$f" 2>/dev/null && printf '%s\n' "$f"
+            done
         done
-    done
-)
-
-current=""
-if ((${#sources[@]})); then
-    current=$(sed -nE "s/^\s*enabled-extensions\s*=\s*(.*)$/\1/p" "${sources[-1]}" | tail -1)
-    echo "  base list from ${sources[-1]}"
+    )
 fi
 
-merged=$(python3 - "$UUID" "${current:-@as []}" <<'PY'
+if [[ -z $current || $current == "@as []" || $current == "'@as []'" ]]; then
+    echo "error: could not read the base enabled-extensions list from gsettings or $DBDIR" >&2
+    echo "       refusing to write a bare ['$UUID'], which would disable every" >&2
+    echo "       extension the base image ships" >&2
+    exit 1
+fi
+echo "  base list ($source_note): $current"
+
+merged=$(python3 - "$UUID" "$current" <<'PY'
 import re
 import sys
 
 uuid, raw = sys.argv[1], sys.argv[2].strip()
-
-if raw in ("", "@as []", "'@as []'"):
-    print("['%s']" % uuid)
-    raise SystemExit
-
 if not (raw.startswith("[") and raw.endswith("]")):
-    sys.exit("cannot parse existing enabled-extensions: %r" % raw)
+    sys.exit("cannot parse enabled-extensions: %r" % raw)
 
 entries = re.findall(r"'((?:[^'\\]|\\.)*)'", raw)
 if not entries:
@@ -65,14 +95,14 @@ if not entries:
 
 for e in entries:
     if e.replace("\\'", "'") == uuid:
-        print(raw)          # already there, leave the base list exactly as it is
+        print(raw)
         raise SystemExit
 
 print("[" + ", ".join("'%s'" % e for e in entries + [uuid]) + "]")
 PY
 )
 
-if [[ $merged == "${current:-@as []}" ]]; then
+if [[ $merged == "$current" ]]; then
     echo "  $UUID already in the system list"
 else
     mkdir -p "$(dirname "$TARGET")"
@@ -84,6 +114,19 @@ else
     echo "  wrote $TARGET"
     echo "    enabled-extensions=$merged"
 fi
+
+# The merge only counts if nothing from the base got dropped on the way.
+for keep in $(python3 -c "
+import re,sys
+raw=sys.argv[1]
+print(' '.join(re.findall(r\"'((?:[^'\\\\]|\\\\.)*)'\", raw)))" "$current"); do
+    if [[ $keep == "$UUID" ]]; then continue; fi
+    if [[ $merged != *"$keep"* ]]; then
+        echo "error: $keep was in the base list but is missing from the merged list" >&2
+        exit 1
+    fi
+done
+echo "  every extension from the base survived the merge"
 
 if command -v dconf >/dev/null 2>&1; then
     dconf update
