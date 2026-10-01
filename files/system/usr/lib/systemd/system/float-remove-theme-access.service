@@ -1,0 +1,16 @@
+[Unit]
+Description=Remove the GTK4, libadwaita and Flatpak theming left by older images
+Documentation=https://docs.flatpak.org/en/latest/flatpak-command-override.html
+# After flatpak.service, because the override file has to exist before it is read
+# and rewritten. Before display-manager so it is done before any session starts.
+After=flatpak.service
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/remove-theme-access
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

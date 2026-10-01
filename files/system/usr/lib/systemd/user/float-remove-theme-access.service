@@ -1,0 +1,20 @@
+[Unit]
+Description=Remove the GTK4, libadwaita and Flatpak theming from this user
+Documentation=man:systemd.special(7)
+# A user service so it runs inside the session, where the home directory is the
+# real one and Flatpak's per-user override is actually in use. The system unit
+# cannot do this: it runs as root before any session exists, so ~ is /root and
+# ~/.local/share/flatpak is not there.
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# $HOME is set by systemd for user units. The second argument is the config dir,
+# which is $XDG_CONFIG_HOME when the user has moved it.
+ExecStart=/usr/bin/remove-theme-access --user %h %E
+TimeoutStartSec=60
+
+[Install]
+WantedBy=default.target

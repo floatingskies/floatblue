@@ -50,11 +50,6 @@ modules:
     scripts:
       - apply-logo-menu-brand.sh
       - apply-desktop-dconf.sh
-      # Still needed with Adwaita. GTK4 and libadwaita read gtk-theme-name from
-      # dconf and look for the theme on XDG_DATA_DIRS, and inside a sandbox the
-      # host's /usr is visible at /run/host/usr but is not on that path. Without
-      # this every libadwaita app in a flatpak comes up unstyled.
-      - apply-flatpak-theme-access.sh
 
   - type: systemd
     system:
@@ -64,3 +59,13 @@ modules:
         # whatever is on disk when the greeter starts is what the greeter gets, no
         # matter which recipe added it or in what order.
         - float-dconf-update.service
+        # Takes the theming plumbing out again on installs that rebased onto an
+        # older image. A build step cannot do this: it would write into the image
+        # being built, and bootc switch leaves an install's own /etc and home
+        # alone. Adwaita needs none of it, so the leftovers are just dead config.
+        - float-remove-theme-access.service
+    user:
+      enabled:
+        # The per-user half: ~/.config/gtk-4.0/gtk.css and
+        # ~/.local/share/flatpak/override only exist inside a session.
+        - float-remove-theme-access.service
