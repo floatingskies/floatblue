@@ -1,7 +1,9 @@
 
-[org.gnome.desktop.interface]
-gtk-theme='Flat-Remix-GTK-Blue-Light'
-icon-theme='Flat-Remix-Blue-Light'
+[org/gnome/desktop/interface]
+# Stock Adwaita, stated rather than assumed. See recipes/features/theming.yml for
+# why the desktop stopped depending on a third-party GTK theme.
+gtk-theme='Adwaita'
+icon-theme='Adwaita'
 color-scheme='default'
 cursor-theme='Adwaita'
 cursor-size=24

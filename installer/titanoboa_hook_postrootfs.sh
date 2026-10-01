@@ -256,43 +256,41 @@ if [[ $desktop_env == gnome ]]; then
     fi
 fi
 
-# Check the theme actually made it into the payload, rather than finding out from
-# a screenshot someone posts later. Anything missing here means the image and the
-# ISO have diverged, and an unthemed ISO is not worth shipping.
+# Check the payload actually carries what the desktop needs, rather than finding
+# out from a screenshot someone posts later. Anything missing here means the image
+# and the ISO have diverged.
+#
+# This used to assert that five Flat Remix theme directories, two icon themes and
+# the User Themes extension were all present. None of that is required any more:
+# the desktop is stock Adwaita, which is part of the base and cannot go missing
+# separately from it. What is worth asserting is the branding and the wallpaper
+# collections, because those are files this image adds and nothing else would put
+# them back.
 missing=()
-for t in Flat-Remix-GTK-Blue-Light Flat-Remix-GTK-Blue-Dark; do
-    [[ -f /usr/share/themes/$t/gtk-4.0/gtk.css ]] || missing+=("$t/gtk-4.0/gtk.css")
-    [[ -f /usr/share/themes/$t/libadwaita/gtk.css ]] || missing+=("$t/libadwaita/gtk.css")
-done
-for t in Flat-Remix-Light Flat-Remix-Dark; do
-    [[ -f /usr/share/themes/$t/gnome-shell/gnome-shell.css ]] || missing+=("$t/gnome-shell/gnome-shell.css")
-done
-for i in Flat-Remix-Blue-Light Flat-Remix-Blue-Dark; do
-    [[ -f /usr/share/icons/$i/index.theme ]] || missing+=("icons/$i/index.theme")
-done
-[[ -d /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com ]] \
-    || missing+=("the User Themes extension")
+LOGO=/usr/share/floatblue/branding/floatos-logo-symbolic.svg
+[[ -f $LOGO ]] || missing+=("the FloatOS panel logo")
 for p in fedora_logo_med.png fedora_whitelogo_med.png; do
     [[ -f /usr/share/pixmaps/$p ]] || missing+=("pixmaps/$p")
 done
 [[ -f /usr/share/glib-2.0/schemas/zz99-float-wallpaper.gschema.override ]] \
     || missing+=("the wallpaper override")
-[[ -d /usr/share/backgrounds/Floatblue ]] || missing+=("the Floatblue wallpapers")
+for c in Floatblue Firewatch Tails; do
+    [[ -d /usr/share/backgrounds/$c ]] || missing+=("the $c wallpapers")
+done
 
 if ((${#missing[@]})); then
-    echo "error: the live ISO is missing theme files: ${missing[*]}" >&2
+    echo "error: the live ISO is missing payload files: ${missing[*]}" >&2
     exit 1
 fi
-echo "  theme files verified in the ISO payload"
+echo "  payload files verified in the ISO"
 
-# The per-user half runs from the session, not from here. float-theme-sync is a
-# user unit enabled system-wide, so the live session gets it the same way any
-# account does, and liveuser gets /etc/skel on first boot.
-if [[ ! -e /etc/systemd/user/default.target.wants/float-theme-sync.service ]]; then
-    echo "error: float-theme-sync.service is not enabled globally, the live session will not be themed" >&2
-    exit 1
-fi
-echo "  float-theme-sync is enabled globally, the live session will pick it up"
+# There is no per-session theming to check here any more. There used to be a
+# float-theme-sync user unit that this hook asserted was enabled globally, and
+# asserting it was what made the ISO look like it had a themed live session when
+# all it had was a service that might not have run yet.
+#
+# liveuser still gets /etc/skel on first boot, and the wallpapers land through the
+# glib override compiled above.
 
 # Install Gparted
 dnf -yq install gparted

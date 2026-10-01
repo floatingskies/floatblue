@@ -9,7 +9,8 @@ Unix and BSD tools I keep reaching for and Fedora does not ship.
 
 The desktop itself is stock GNOME. Dash to Dock and AppIndicator come from the
 Bluefin base and I left them alone, because they are how I actually use a
-machine. Blur My Shell is off. The skin is Flat Remix and nothing else moves.
+machine. Blur My Shell is off. The widgets are stock Adwaita and the colour comes
+from the wallpapers, which is the only part of the desktop that changes.
 
 ## Small and old machines
 
@@ -42,8 +43,8 @@ dnf metadata refresh, `man-db` and `plocate` are off for the same reason.
 
 **Shell animations off, system-wide.** Not a subtle preference on a software or
 weak GPU. Every window open, every workspace switch and every notification is a
-full screen repaint. `float-theme-sync` owns the themes, so this lives in its own
-dconf keyfile and nothing else is written there.
+full screen repaint. Nothing writes this key at run time any more, so it is a
+plain system default that takes effect at startup.
 
 **Laptop mode and smaller dirty ratios.** Writeback sooner and in smaller bursts,
 so an older disk is not asked to absorb a large buffer all at once and stall
@@ -156,34 +157,24 @@ This is the part worth reading if you are copying any of this.
   the Bluefin base and I kept them, they are how you actually use the machine.
   Blur My Shell is disabled through the system dconf database, because a shell
   theme over a blurred panel just looks broken
-* **User Themes goes into the system extension list, not the user one.** This one
-  cost me a while. `float-theme-sync` runs after the session starts, and by then
-  gnome-shell has already read its extension list, so an extension enabled there
-  is not picked up until the shell restarts. That is why the shell theme only
-  showed up on the second login. `enable-user-theme-systemwide.sh` writes the key
-  into the system dconf database instead, where it is read at shell startup. It
-  merges rather than replaces: the list is read back out of the base image and
-  user-theme is appended, so the dock and AppIndicator survive, and if it cannot
-  parse what it found it fails the build instead of guessing
+* **The panel logo is in the system dconf database, not the user one.** The Logo
+  Menu extension reads `use-custom-icon` and `custom-icon-path` when the shell
+  starts. Setting those on the user side works, but the shell has already read
+  its settings by the time a session script could run, so the logo appears on the
+  second login instead of the first. Writing them to `/etc/dconf/db/distro.d`
+  puts them where the shell reads them at startup. Two scripts do this, for two
+  reasons: the keyfile is compiled by `dconf update`, and
+  `apply-logo-menu-brand.sh` also replaces the SVGs inside the extension's own
+  `Resources` directory, so the icon is still the FloatOS mark if `use-custom-icon`
+  is ever turned off
 * **One more script, `apply-desktop-dconf.sh`.** Dropping a file into
   `/etc/dconf/db/distro.d` does nothing on its own, the profile under
   `/etc/dconf/profile/user` is only written by an explicit `dconf update`. That
   script runs the update and reads the result back, so a profile that compiled
   but did not take effect fails the build instead of silently doing nothing
-* **GTK4 goes through the libadwaita half, as a user stylesheet.** Flat Remix
-  ships two different sheets and they are not the same size. `gtk-4.0/gtk.css`
-  is a 5298 line standalone sheet, `libadwaita/gtk.css` is an 83 line overlay
-  with the palette and the titlebutton rules. The standalone one does not sit
-  well with a modern libadwaita, which is the reason libadwaita exists as its
-  own directory in the first place. So the overlay gets copied into
-  `~/.config/gtk-4.0/gtk.css`, which GTK4 reads as a user stylesheet layered on
-  top of the theme, and the Flatpak apps pick it up for free because the config
-  dir is shared. It is copied again on every light/dark switch, since each
-  variant has its own copy of the overlay. Worth being precise about one thing:
-  that overlay has no dark and light mode embedded in it, no `.dark` selectors
-  and no `prefers-color-scheme`. Dark mode comes from swapping between the
-  `Flat-Remix-GTK-Blue-Light` and `Flat-Remix-GTK-Blue-Dark` variants, which is
-  what `float-theme-sync` already does
+* **GTK4 needs nothing special.** Adwaita already ships the right sheet for light
+  and dark inside the same theme directory, so the whole arrangement of picking a
+  variant per colour scheme is gone
 
 ## doas and the BSD/Unix tools
 
@@ -233,22 +224,28 @@ write.
 
 ## Smaller stuff
 
-* **Flat Remix** in blue, for GTK, libadwaita, the shell and the icons, with
-  the Adwaita cursor. Toggling light and dark in Settings swaps all four at
-  once, which took a little work: Flat Remix keeps Light and Dark in separate
-  theme folders and its `libadwaita/` has no `gtk-dark.css`, so every libadwaita
-  app would stay light no matter what the colour scheme said. A per user
-  service called `float-theme-sync` watches that setting and applies all four,
-  including to native GTK3 and GTK4 apps and to Flatpaks
+* **Adwaita** for GTK, libadwaita, the shell and the icons, with the Adwaita
+  cursor. This replaced Flat Remix, which was right on two counts. It is
+  maintained outside GNOME, so a release that changed a widget class could leave
+  it visibly stale and the only fix was to wait for someone else. And with the
+  wallpapers carrying the colour, neutral widgets let a background actually be
+  looked at, which is the point of having one. Doing light and dark used to take
+  real work: Flat Remix keeps them in separate theme folders and its
+  `libadwaita/` has no `gtk-dark.css`, so a libadwaita app stayed light whatever
+  the colour scheme said, and a per-user service, `float-theme-sync`, watched
+  that setting and rewrote the GTK theme, the icon theme, the shell theme and a
+  copied libadwaita overlay on every login. Adwaita needs none of that
 * **The logo.** Shipped under the pixmap file names the base tooling already
   looks for, plus both Plymouth watermarks, with the initramfs rebuilt so the
   splash is branded from the very first frame
-* **Wallpapers.** Two collections, eleven light and dark pairs. Floatblue is nine
-  patterns drawn from the Flat Remix palette, with the logo placed differently
-  in each. Tails is the older set, kept because it sits well with the rest of the
-  desktop. The Fedora, GNOME and Bluefin collections are gone along with their
-  entries in the picker.
-  Both are day and night aware. The Tails originals were daytime pastel scenes,
+* **Wallpapers.** Three collections, every one with a light and a dark variant.
+  Floatblue is nine geometric patterns drawn from a set of named palettes, with
+  the logo placed differently in each. Firewatch is thirteen flat banded
+  landscapes, forests, reefs and skies in the style of the game. Tails is the
+  older set, kept because it sits well with the rest of the desktop. The Fedora,
+  GNOME and Bluefin collections are gone along with their entries in the picker.
+  All three are day and night aware, and GNOME switches between the pair by
+  itself. The Tails originals were daytime pastel scenes,
   so `generate-tails-nightwalls.sh` grades them per channel instead of dropping
   them to grayscale and mapping between two blues, which is the obvious way to do
   this and takes the colour out entirely. Red is scaled down hardest and blue
@@ -284,7 +281,7 @@ not start on its own.
 There is a second image for Intel Macs that macOS has finished with, built on
 **Silverblue** rather than Bluefin DX. Same Fedora underneath, without a desktop
 stack tuned for a discrete GPU and a network configuration this hardware does not
-want. Everything else is the same: the branding, the Flat Remix theme, the
+want. Everything else is the same: the branding, the Adwaita theme, the
 wallpapers, the profiles, the hardening. It comes out of its own
 `floatblue-mac.yml` recipe and its own workflows, `build-image-mac.yml` and
 `build-iso-mac.yml`.
@@ -401,14 +398,14 @@ Boot the ISO. You have the full desktop running live from the image. To install 
 
 ### The theme comes along with it
 
-The ISO payload is the container image, so everything under `/usr` is already there: the Flat Remix GTK, libadwaita, shell and icon themes, the wallpaper collections, the pixmaps and the User Themes extension. Nothing is copied in separately for the ISO.
+The ISO payload is the container image, so everything under `/usr` is already there: the three wallpaper collections, the pixmaps, the branding and the FloatOS panel logo. Nothing is copied in separately for the ISO.
 
 Two things are not automatic, and the post-rootfs hook now handles both:
 
 - `glib-compile-schemas`, which is where `org.gnome.desktop.background` lives, so the wallpaper override and its light and dark pair are picked up.
-- `dconf update`, which compiles `/etc/dconf/db/*.d`. That is where the greeter theme, the disabled Blur My Shell, the User Themes entry and animations-off live. The hook previously only ran the glib half, so the dconf half depended entirely on `float-dconf-update.service` at boot. It worked, but relying on a service for something the hook can do deterministically is how a live ISO ends up booting unthemed with nothing in the log to explain it.
+- `dconf update`, which compiles `/etc/dconf/db/*.d`. That is where the disabled Blur My Shell, animations-off and the Logo Menu panel icon live. The hook previously only ran the glib half, so the dconf half depended entirely on `float-dconf-update.service` at boot. It worked, but relying on a service for something the hook can do deterministically is how a live ISO ends up booting unthemed with nothing in the log to explain it.
 
-The hook then checks the theme actually made it into the payload: the GTK 4.0 and libadwaita sheets, both shell themes, both icon themes, the extension, both branding pixmaps, the wallpaper override and the Floatblue collection. It also checks that `float-theme-sync.service` is enabled globally, since that is what themes the live session. Any of those missing fails the ISO build rather than producing an unthemed ISO that only gets noticed from a screenshot later.
+The hook then checks the payload actually carries what the desktop needs: the FloatOS panel logo, both branding pixmaps, the wallpaper override and all three wallpaper collections. It no longer checks for Flat Remix theme directories, icon themes or the User Themes extension, because the desktop is stock Adwaita now and none of that is a file the image adds. Any of those missing fails the ISO build rather than producing an ISO that only gets noticed from a screenshot later.
 
 ## Verification
 

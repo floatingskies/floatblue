@@ -1,18 +1,17 @@
 [org/gnome/shell]
+# Blur My Shell is off. It is a large patch to the shell compositor that costs
+# frame time on the hardware this image targets and that nothing here asks for.
 disabled-extensions=['blur-my-shell@aunetx']
 
-# GTK and icon themes as system defaults, alongside the shell theme below, for the
-# same reason. These are read before the session starts, so the desktop comes up
-# already themed instead of opening unthemed and correcting itself a moment later
-# with every app re-parsing its CSS in front of the user. float-theme-sync still
-# follows the light/dark toggle, but it now finds these already in place and writes
-# nothing.
-#
-# Dark pair, to match the shell theme below. If the session is in light mode the
-# sync corrects these on first login and never touches them again.
-[org/gnome/desktop/interface]
-gtk-theme='Flat-Remix-GTK-Blue-Dark'
-icon-theme='Flat-Remix-Blue-Dark'
-
 [org/gnome/shell/extensions/user-theme]
-name='Flat-Remix-Dark'
+# Left unset on purpose. This key only means anything while the User Themes
+# extension is installed and enabled, and with stock Adwaita there is no shell
+# theme to select, so the shell uses its own default. Writing a name here would
+# mean shipping a theme directory to go with it.
+name=''
+
+# The GTK and icon themes used to be pinned here as system defaults, so the session
+# would start themed instead of opening plain and correcting itself. That was worth
+# doing when a per-session service had to apply them. There is no service now and
+# Adwaita is what GNOME starts with, so the pinning lives in
+# zz500-float-theme.gschema.override where the rest of the theme settings are.

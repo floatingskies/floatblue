@@ -1,24 +1,39 @@
 
+# Theming.
+#
+# The desktop runs stock Adwaita. That used to be Flat Remix, a third-party theme,
+# and it was the wrong dependency for a long-lived image: it is maintained outside
+# GNOME, so every GNOME release that changed a widget class or a libadwaita CSS
+# rule could leave the theme stale or visibly broken, and the fix was always to wait
+# for someone else. Adwaita ships with the platform, so it cannot drift from it.
+#
+# The wallpapers are what carry the colour now. The Floatblue set is drawn from a
+# set of named palettes and the Firewatch set is flat banded landscape, so the
+# desktop has plenty of colour in it without the widgets having to supply more.
+# Neutral widgets also let a wallpaper be looked at, which is the point of having
+# a background at all.
+
 modules:
   - type: dnf
     install:
       skip-unavailable: true
       packages:
-        - libadwaita
-        - adwaita-cursor-theme
+        # Already in the base on a GNOME image. Named explicitly rather than assumed,
+        # because this recipe now states what the desktop is made of instead of
+        # leaving it to whatever the base happened to ship.
         - adwaita-icon-theme
-
-  - type: gnome-extensions
-    install:
-      - User Themes
+        - adwaita-cursor-theme
+        - libadwaita
 
   - type: gschema-overrides
     include:
+      # Pins Adwaita rather than leaving it to the base. Bluefin sets a font and a
+      # colour scheme of its own, and an image that means to be stock should say so
+      # in a file it owns instead of hoping the base agrees.
       - zz500-float-theme.gschema.override
 
-  # Installed here rather than left to the ublue overrides block further down,
-  # because apply-desktop-dconf.sh has to run "dconf update" after this file
-  # exists, and that block comes later in the build order.
+  # Both keyfiles have to exist before apply-desktop-dconf.sh runs "dconf update",
+  # which is why they are here rather than in a later block.
   - type: files
     files:
       - source: dconf-ublue/10-float-desktop
@@ -33,21 +48,19 @@ modules:
 
   - type: script
     scripts:
-      - install-flat-remix-themes.sh
-      - enable-user-theme-systemwide.sh
-      - seed-user-theme.sh
       - apply-logo-menu-brand.sh
       - apply-desktop-dconf.sh
+      # Still needed with Adwaita. GTK4 and libadwaita read gtk-theme-name from
+      # dconf and look for the theme on XDG_DATA_DIRS, and inside a sandbox the
+      # host's /usr is visible at /run/host/usr but is not on that path. Without
+      # this every libadwaita app in a flatpak comes up unstyled.
       - apply-flatpak-theme-access.sh
 
   - type: systemd
     system:
       enabled:
         # dconf update compiles distro.d into a binary database, so a keyfile
-        # dropped in after it ran is simply ignored. Running it again at boot
-        # means whatever is on disk when the greeter starts is what the greeter
-        # gets, no matter which recipe added it or in what order.
+        # dropped in after it ran is simply ignored. Running it again at boot means
+        # whatever is on disk when the greeter starts is what the greeter gets, no
+        # matter which recipe added it or in what order.
         - float-dconf-update.service
-    user:
-      enabled:
-        - float-theme-sync.service
