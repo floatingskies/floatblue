@@ -26,12 +26,13 @@ ICONS_DIR=/usr/share/icons
 
 mkdir -p "$CACHE" "$THEMES_DIR" "$ICONS_DIR"
 
-# Prints the tarball path on stdout and nothing else: the caller captures this
-# with $(...), so any progress message here would end up inside the path.
 fetch() {
     local repo=$1 ref=$2 tarball="$CACHE/$1-$2.tar.gz"
 
     if [[ ! -s $tarball ]]; then
+        # Both of these must go to stderr: the caller captures this function's
+        # stdout with $(...), so anything printed here would end up glued into
+        # the tarball path and tar would be handed "Downloading foo\n/path".
         echo "Downloading $repo@${ref:0:12}" >&2
         curl -fL --retry 5 --retry-delay 5 --retry-all-errors \
             "https://codeload.github.com/daniruiz/$repo/tar.gz/$ref" \
@@ -41,16 +42,50 @@ fetch() {
 }
 
 # Extract <repo tarball> <path inside repo> <destination>
+#
+# The archive is rooted at a single directory whose name codeload derives from
+# the ref ("flat-remix-gtk-master" even when a commit SHA was requested), so it
+# cannot be spelled out. The depth to strip is therefore computed rather than
+# hardcoded: 1 for the unknown root, plus one per component of the path we
+# want. That matters because the three repos are laid out differently — the
+# GTK and Shell themes live under themes/, the icon themes at the repo root —
+# and getting it wrong leaves the content one directory too deep.
 install_dir() {
+    # Two statements on purpose: `local a=$1 b=$2 rest=$b` would expand every
+    # word before assigning any of them, so $b would be unset here and `set -u`
+    # would abort the build.
     local tarball=$1 inner=$2 dest=$3
+    # 1 for the archive root (whose name codeload derives from the ref), 1 for
+    # the theme directory itself, plus one per separator inside $inner.
+    local depth=2 rest=$inner
 
-    [[ -d $dest ]] && { echo "  ${dest##*/} already installed"; return 0; }
+    if [[ -d $dest ]]; then
+        echo "  ${dest##*/} already installed"
+        return 0
+    fi
+
+    while [[ $rest == */* ]]; do
+        rest=${rest#*/}
+        depth=$((depth + 1))
+    done
+
     mkdir -p "$dest"
-    tar xzf "$tarball" -C "$dest" --strip-components=2 --wildcards "*/$inner"
-    # Upstream ships install.sh/uninstall.sh inside the GTK theme dirs; they are
-    # meant for a user running the theme from ~/.themes and have no business
-    # being on the system path.
+    # The trailing /* matters: matching only "*/$inner" selects the directory
+    # entry itself, which the strip then collapses to nothing, and tar does not
+    # descend into it.
+    tar xzf "$tarball" -C "$dest" --strip-components="$depth" --wildcards "*/$inner/*"
+
+    # Upstream ships install.sh/uninstall.sh inside the GTK theme dirs; they
+    # are meant for a user running the theme from ~/.themes and have no
+    # business being on the system path.
     rm -f "$dest/install.sh" "$dest/uninstall.sh"
+
+    # A wrong strip depth is silent — the tree just ends up in the wrong place —
+    # so refuse to continue instead of shipping a theme GTK cannot load.
+    if [[ -z $(find "$dest" -mindepth 1 -maxdepth 1 -print -quit) ]]; then
+        echo "error: nothing extracted into $dest (bad strip depth?)" >&2
+        exit 1
+    fi
     echo "  installed $dest"
 }
 
