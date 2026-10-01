@@ -180,11 +180,10 @@ image ships no policy file on purpose. With no policy, containers falls back to
 containers-policy.json specifies a default of `insecureAcceptAnything`; refusing usage
 ```
 
-A policy is worth having, but the one that is actually useful here is a
-restrictive one, and that is exactly what breaks `podman pull` and `bootc
-switch` itself, since those are how this image installs and updates. So the
-images are signed, and you check them by hand instead. See
-[Verification](#verification) below.
+A restrictive policy is the one actually worth having, and it is also the one
+that breaks `podman pull` and `bootc switch` itself, since those are how this
+image installs and updates. So there is no policy, and the images are signed
+instead. Check them by hand, see [Verification](#verification) below.
 
 ## Installing via ISO
 

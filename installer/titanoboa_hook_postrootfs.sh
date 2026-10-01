@@ -128,7 +128,7 @@ mkdir -p /usr/share/anaconda/post-scripts
 # Switch to the container image on disk
 cat <<EOF >/usr/share/anaconda/post-scripts/ublue-install-configure-upgrade.ks
 %post --erroronfail --log=/tmp/ublue_bootc-switch.log
-bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry $imageref:$imagetag
+bootc switch --mutate-in-place --transport registry $imageref:$imagetag
 %end
 EOF
 
