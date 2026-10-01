@@ -58,20 +58,57 @@ have_session() {
     gsettings get "$SCHEMA" color-scheme >/dev/null 2>&1
 }
 
-# Set (or replace) a single key in an INI file, leaving every other setting the
-# user has there alone. GTK only reads settings.ini, so this is the only place
-# native GTK3/GTK4 apps look for the theme name.
+# Write a key into a GTK settings.ini.
+#
+# GTK reads these files with GKeyFile, and GKeyFile refuses to parse a file that
+# does not start with a group: "Key file does not start with a group". So a bare
+# "gtk-theme-name=..." is not merely ignored, it takes the whole file down with
+# it, and every native GTK3/GTK4 app falls back to Adwaita while the icon theme
+# (which goes through gsettings) still looks right.
+#
+# Three cases, because an account being rebased can be in any of them:
+#   * no settings.ini at all          -> create it with [Settings]
+#   * exists, has [Settings]          -> set or replace the key inside it
+#   * exists, no [Settings] yet       -> put [Settings] on top, which both fixes
+#                                        the parse and moves the stray keys into
+#                                        the group GTK looks in
 set_ini() {
-    local file=$1 key=$2 value=$3 tmp
+    local file=$1 key=$2 value=$3
     mkdir -p "$(dirname "$file")"
-    if [[ -f $file ]] && grep -q "^[[:space:]]*${key}[[:space:]]*=" "$file"; then
-        tmp=$(mktemp)
-        sed -e "s|^[[:space:]]*${key}[[:space:]]*=.*|${key}=${value}|" "$file" >"$tmp"
-        cat "$tmp" >"$file"
-        rm -f "$tmp"
-    else
-        printf '%s=%s\n' "$key" "$value" >>"$file"
-    fi
+    touch "$file"
+
+    awk -v key="$key" -v value="$value" '
+        BEGIN { insec = 0; written = 0 }
+        /^[[:space:]]*\[/ {
+            if ($0 ~ /^[[:space:]]*\[Settings\][[:space:]]*$/) {
+                print
+                if (!written) { print key "=" value; written = 1 }
+                insec = 1
+            } else {
+                print
+                insec = 0
+            }
+            next
+        }
+        {
+            if (insec && $0 ~ ("^[[:space:]]*" key "[[:space:]]*=")) {
+                if (!written) { print key "=" value; written = 1 }
+                next
+            }
+            # A non-empty line before any group header: this is the broken
+            # "rebased account" case, so open the group on top of it.
+            if (!insec && !written && $0 !~ /^[[:space:]]*(#|;|$)/) {
+                print "[Settings]"
+                print key "=" value
+                written = 1
+                insec = 1
+            }
+            print
+        }
+        END {
+            if (!written) { print "[Settings]"; print key "=" value }
+        }
+    ' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
 }
 
 # Put the User Themes extension in the enabled list without discarding
@@ -103,7 +140,7 @@ ensure_user_theme_enabled() {
 }
 
 apply() {
-    local scheme gtk icons shell dir
+    local scheme gtk icons shell cfg
 
     scheme=$(gsettings get "$SCHEMA" color-scheme 2>/dev/null | tr -d "'")
     if [[ $scheme == prefer-dark ]]; then
@@ -112,39 +149,45 @@ apply() {
         gtk=$GTK_LIGHT icons=$ICONS_LIGHT shell=$SHELL_LIGHT
     fi
 
-    # Guard against a partial install: applying a theme that is not on disk
-    # leaves the session with unstyled widgets, which is worse than not
-    # switching at all.
-    dir=""
-    for candidate in "$THEMES_DIR/$gtk" "$ICONS_DIR/$icons"; do
-        [[ -d $candidate ]] && dir=1
-    done
-    if [[ -z $dir ]]; then
-        log "Flat Remix themes not found, skipping"
-        return 0
+    cfg=${XDG_CONFIG_HOME:-$HOME/.config}
+
+    # Each layer is checked on its own, so a partial install degrades one layer
+    # instead of silently pointing every layer at a theme that is not there.
+    if [[ -d $THEMES_DIR/$gtk ]]; then
+        gsettings set "$SCHEMA" gtk-theme "$gtk"
+        set_ini "$cfg/gtk-3.0/settings.ini" gtk-theme-name "$gtk"
+        set_ini "$cfg/gtk-4.0/settings.ini" gtk-theme-name "$gtk"
+    else
+        log "GTK theme missing at $THEMES_DIR/$gtk, leaving GTK alone"
+        gtk=""
     fi
 
-    gsettings set "$SCHEMA" gtk-theme "$gtk"
-    gsettings set "$SCHEMA" icon-theme "$icons"
+    if [[ -d $ICONS_DIR/$icons ]]; then
+        gsettings set "$SCHEMA" icon-theme "$icons"
+    else
+        log "icon theme missing at $ICONS_DIR/$icons, leaving icons alone"
+        icons=""
+    fi
 
-    # User Themes is an extension; without it the schema is absent and the
-    # shell just keeps Adwaita. That is a degraded look, not an error.
+    # Enable the extension first and unconditionally. The schema is how the theme
+    # name is stored, but the extension is what makes gnome-shell read it, and
+    # gating the enable on the schema being compiled means neither ever happens
+    # when the schema is the thing that is missing.
+    ensure_user_theme_enabled
+
     if gsettings list-schemas 2>/dev/null | grep -qx "$SHELL_SCHEMA"; then
         gsettings set "$SHELL_SCHEMA" name "$shell"
-        ensure_user_theme_enabled
+    else
+        log "user-theme schema not available yet, shell theme will apply next login"
     fi
 
-    local cfg=${XDG_CONFIG_HOME:-$HOME/.config}
-    set_ini "$cfg/gtk-3.0/settings.ini" gtk-theme-name "$gtk"
-    set_ini "$cfg/gtk-4.0/settings.ini" gtk-theme-name "$gtk"
-
-    if command -v flatpak >/dev/null 2>&1; then
+    if [[ -n $gtk ]] && command -v flatpak >/dev/null 2>&1; then
         flatpak override --user --filesystem=/usr/share/themes:ro \
             --filesystem=/usr/share/icons:ro \
             --env=GTK_THEME="$gtk" >/dev/null 2>&1 || true
     fi
 
-    log "applied ${gtk} / ${icons} / ${shell}"
+    log "applied gtk=${gtk:-none} icons=${icons:-none} shell=$shell"
 }
 
 if ! have_session; then
