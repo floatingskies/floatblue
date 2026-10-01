@@ -60,6 +60,19 @@ Customizations added to the image:
     Fedora 44's RPM set plus the RPMs listed here. Install Flatpaks yourself
     whenever you want them.
 
+-   **doas and the BSD/Unix corner of the toolbox.** `doas` (OpenBSD's privilege
+    escalation) is installed *alongside* sudo, not instead of it: it is a much
+    smaller attack surface, but it is not a drop-in replacement — no `sudo -u`,
+    and `doas.conf` is far poorer than sudoers — and this image gets used for
+    administration where Ansible and ordinary scripts assume sudo. The `wheel`
+    group gets `permit persist :wheel`. Note the package is `opendoas`, the
+    command is still `doas`. Alongside it: `ksh` (OpenBSD's shell lineage),
+    `dash` (fast POSIX sh), `vis` (BSD's vi), `ed`, `mandoc`, `bc`, `bats`,
+    `screen`, `ltrace`, `strace`, `lsof`, `rsync`, `gawk`, `mawk`, `parallel`,
+    and the `m4`/`autoconf`/`automake`/`libtool` chain. What Fedora does not
+    package — `openbsd-inetd`, `netcat-openbsd`, the NetBSD `cb-*` tools — is
+    left out because upstream does not ship it, not as an oversight.
+
 -   **Network and light security tooling**, all from stock Fedora repos: `nmap`
     `masscan` `arp-scan` `tcpdump` `wireshark-cli` `termshark` `traceroute` `mtr`
     `iperf3` `ethtool` `netcat` `socat` `gnutls-cli` `lynis` `audit`

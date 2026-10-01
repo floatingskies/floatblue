@@ -10,6 +10,7 @@ modules:
   - from-file: features/wallpapers.yml
   - from-file: features/hardening.yml
   - from-file: features/networking.yml
+  - from-file: features/unix-tooling.yml
   - from-file: features/cockpit.yml
   - from-file: features/codecs.yml
   - from-file: features/brew.yml

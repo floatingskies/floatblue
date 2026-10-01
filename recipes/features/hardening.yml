@@ -9,7 +9,9 @@
 #
 #   * sudo / su / pkexec are not removed. secureblue's replacement, run0,
 #     starts a full systemd user session per call, which is visibly slow on a
-#     Sandy Bridge CPU and breaks ordinary scripting.
+#     Sandy Bridge CPU and breaks ordinary scripting. doas is installed
+#     alongside sudo instead (see unix-tooling.yml) — it is a much smaller
+#     attack surface, but it is not a drop-in replacement.
 #   * Xwayland stays enabled. This image ships Steam.
 #   * ping is not disabled. The image also ships a network toolset.
 #   * perf_event_paranoid is 2, not 3, so perf still works on your own
