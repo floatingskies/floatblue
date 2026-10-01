@@ -297,7 +297,15 @@ build finished last would overwrite the other, for both machines.
 
 BCM43xx, which is what the Airs and Pros from roughly 2006 to 2015 have. That is
 `broadcom-wl` plus `akmod-wl` from RPM Fusion nonfree, and it needs the `akmods`
-package to rebuild for a new kernel. The practical consequence is worth stating
+package to rebuild for a new kernel. This is the ordinary Fedora path, not
+something specific to this image: Silverblue and Bluefin run the stock Fedora
+kernel, the `main` flavour, so `kernel-devel` comes from the normal repositories
+and `akmods` has what it needs to build. Universal Blue also publishes a prebuilt
+`kmod-wl` in its akmods container, tagged `main-<fedora>` for this kernel, and
+that one arrives already signed for Secure Boot. It is not wired in here because
+pinning the image to a kernel version makes the whole thing need a rebuild every
+time Fedora moves, but it is the better option on a T2 Mac if Secure Boot turns
+out to be a problem. The practical consequence is worth stating
 plainly: **after a kernel update the WiFi is gone until `akmods` finishes
 building the module**, which on an Atomic image happens at boot. That is how the
 driver is packaged, not something this image can fix. `apply-mac-hardware.sh`
