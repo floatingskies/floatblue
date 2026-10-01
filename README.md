@@ -243,18 +243,26 @@ write.
 * **The logo.** Shipped under the pixmap file names the base tooling already
   looks for, plus both Plymouth watermarks, with the initramfs rebuilt so the
   splash is branded from the very first frame
-* **Wallpapers.** Two collections. Floatblue is nine patterns drawn from the
-  Flat Remix palette, each rendered for light and for dark, with the logo placed
-  differently in each. Tails is the older set, kept because it sits well with the
-  rest of the desktop, and because having images with no light and dark split at
-  all is worth having in the picker. The Fedora, GNOME and Bluefin collections
-  are gone along with their entries in the picker.
+* **Wallpapers.** Two collections, eleven light and dark pairs. Floatblue is nine
+  patterns drawn from the Flat Remix palette, with the logo placed differently
+  in each. Tails is the older set, kept because it sits well with the rest of the
+  desktop. The Fedora, GNOME and Bluefin collections are gone along with their
+  entries in the picker.
+  Both are day and night aware. The Tails originals were daytime pastel scenes,
+  so `generate-tails-nightwalls.sh` grades them per channel instead of dropping
+  them to grayscale and mapping between two blues, which is the obvious way to do
+  this and takes the colour out entirely. Red is scaled down hardest and blue
+  barely at all, so warm things stay warm but dim and everything already cool
+  goes deeper, which reads as moonlight without touching saturation. A small
+  blue colorize ties it together. Mean luminance goes from 0.83 to 0.49, and
+  pushing it further started crushing the fox into the background, since the
+  source art has no real blacks to work with. The day versions get a small
+  correction rather than a restyle: a wallpaper table set to mean 0.83 is
+  unpleasant to look at on a bright desktop. Re-encoding also took the Tails
+  collection from 6.6 MB to 2.7 MB.
   Which wallpaper becomes the default gets decided by `RANDOM` during the build,
-  across both collections. A Floatblue pattern is drawn as a light and a dark
-  variant of itself rather than one image for both appearances, since the desktop
-  already follows the day and night switch. A Tails image has no pair and is
-  used for both. `generate-floatblue-wallpapers.py` sits next to them so the set
-  can be regenerated.
+  across both collections, as a light and dark pair rather than one image for
+  both appearances.
 * **Homebrew** via `ublue-brew`, with the setup service and the weekly update
   and upgrade timers
 * **Codecs** from the negativo17 COPR (`ffmpeg`, `gstreamer1-libav`,
