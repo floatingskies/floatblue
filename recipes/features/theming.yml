@@ -23,6 +23,13 @@ modules:
     files:
       - source: dconf-ublue/10-float-desktop
         destination: /etc/dconf/db/distro.d
+      # Logo-menu configuration, including the FloatOS mark. This file was in the
+      # repo the whole time but never reached the image: ublue-overrides.yml
+      # copies the whole dconf-ublue directory, and the only recipe that pulled
+      # that module in was ublue-features.yml, which nothing references. So the
+      # panel had been showing the Universal Blue logo because nothing overrode it.
+      - source: dconf-ublue/04-gnome-logo-menu
+        destination: /etc/dconf/db/distro.d
 
   - type: script
     scripts:

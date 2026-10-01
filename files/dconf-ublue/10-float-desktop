@@ -1,5 +1,18 @@
 [org/gnome/shell]
 disabled-extensions=['blur-my-shell@aunetx']
 
+# GTK and icon themes as system defaults, alongside the shell theme below, for the
+# same reason. These are read before the session starts, so the desktop comes up
+# already themed instead of opening unthemed and correcting itself a moment later
+# with every app re-parsing its CSS in front of the user. float-theme-sync still
+# follows the light/dark toggle, but it now finds these already in place and writes
+# nothing.
+#
+# Dark pair, to match the shell theme below. If the session is in light mode the
+# sync corrects these on first login and never touches them again.
+[org/gnome/desktop/interface]
+gtk-theme='Flat-Remix-GTK-Blue-Dark'
+icon-theme='Flat-Remix-Blue-Dark'
+
 [org/gnome/shell/extensions/user-theme]
 name='Flat-Remix-Dark'

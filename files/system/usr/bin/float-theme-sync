@@ -95,7 +95,12 @@ have_session() {
 set_ini() {
     local file=$1 key=$2 value=$3
     mkdir -p "$(dirname "$file")"
-    touch "$file"
+
+    # Only create it. An unconditional touch updates the mtime of a file that
+    # already exists, which is the one thing that makes GTK3 reload the theme,
+    # so it has to be a create-if-absent and not a bare touch. That single line
+    # was defeating the content comparison at the bottom of this function.
+    [[ -e $file ]] || touch "$file"
 
     awk -v key="$key" -v value="$value" '
         BEGIN { insec = 0; written = 0 }
@@ -122,13 +127,48 @@ set_ini() {
                 print key "=" value
                 written = 1
                 insec = 1
+                # Drop the stray line if it is the very key being set. It is
+                # inside [Settings] now, so leaving it there gives the file two
+                # values for one key and the old one wins on lookup, which looks
+                # exactly like the theme being ignored.
+                if ($0 ~ ("^[[:space:]]*" key "[[:space:]]*=")) next
             }
             print
         }
         END {
             if (!written) { print "[Settings]"; print key "=" value }
         }
-    ' "$file" >"$file.tmp" && mv "$file.tmp" "$file"
+    ' "$file" >"$file.tmp" || return 1
+
+    # Compare before replacing. GTK3 watches settings.ini and reloads the theme
+    # when the file changes, so replacing it with identical content is not free:
+    # it changes the mtime, GTK3 notices, and every open GTK3 app re-parses the
+    # theme it already had. Leaving the file alone when nothing changed is what
+    # makes a second login cost nothing.
+    if [[ -f $file ]] && cmp -s "$file.tmp" "$file"; then
+        rm -f "$file.tmp"
+        return 0
+    fi
+    mv "$file.tmp" "$file"
+}
+
+# Writing a GTK key is not free. gsettings set gtk-theme, icon-theme or the shell
+# theme name makes every process already running re-read the theme: GTK4 reloads
+# the whole stylesheet, GTK3 reloads settings.ini, the shell rebuilds the panel.
+# Setting a key to the value it already holds still writes to dconf and still
+# triggers all of it.
+#
+# At login that is the difference between a session that opens themed and one that
+# opens unthemed and then re-themes itself in front of the user, with every app
+# parsing its CSS twice. So every write goes through here and is skipped when the
+# value already matches.
+set_gsettings_if_changed() {
+    local schema=$1 key=$2 value=$3 current
+    current=$(gsettings get "$schema" "$key" 2>/dev/null || true)
+    current=${current#\'}
+    current=${current%\'}
+    [[ $current == "$value" ]] && return 0
+    gsettings set "$schema" "$key" "$value"
 }
 
 # Put the User Themes extension in the enabled list without discarding
@@ -175,7 +215,7 @@ ensure_user_theme_enabled() {
 # light and dark in step, since each variant ships its own copy of the overlay
 # and the two are not interchangeable.
 install_user_stylesheet() {
-    local theme=$1 src=$THEMES_DIR/$1/libadwaita dst=$2
+    local theme=$1 src=$THEMES_DIR/$1/libadwaita dst=$2 unchanged=0
 
     if [[ ! -s $src/gtk.css ]]; then
         log "no libadwaita/gtk.css in $theme, leaving the user stylesheet alone"
@@ -183,11 +223,26 @@ install_user_stylesheet() {
     fi
 
     mkdir -p "$dst"
-    cp -a "$src/gtk.css" "$dst/gtk.css"
+
+    # Same reasoning as set_ini: GTK4 watches this exact file and re-parses it
+    # when it changes. Rewriting it with the same bytes on every login makes
+    # every open libadwaita app reload the overlay for nothing.
+    if [[ -f $dst/gtk.css ]] && cmp -s "$src/gtk.css" "$dst/gtk.css"; then
+        unchanged=1
+    else
+        cp -a "$src/gtk.css" "$dst/gtk.css"
+        unchanged=0
+    fi
 
     # The overlay points at assets/ by relative path, so the directory has to
     # travel with it or the window controls render bare.
-    if [[ -d $src/assets ]]; then
+    #
+    # Only touched when the overlay itself changed. The previous version did
+    # "rm -rf assets" unconditionally on every login, which for one instant left
+    # the overlay pointing at a directory that was not there, and then copied the
+    # whole tree back. The overlay and the assets ship together, so if the overlay
+    # is already current the assets are too.
+    if [[ -d $src/assets && $unchanged -eq 0 ]]; then
         rm -rf "${dst:?}/assets"
         cp -a "$src/assets" "$dst/assets"
     fi
@@ -208,7 +263,7 @@ apply() {
     # Each layer is checked on its own, so a partial install degrades one layer
     # instead of silently pointing every layer at a theme that is not there.
     if [[ -d $THEMES_DIR/$gtk ]]; then
-        gsettings set "$SCHEMA" gtk-theme "$gtk"
+        set_gsettings_if_changed "$SCHEMA" gtk-theme "$gtk"
         set_ini "$cfg/gtk-3.0/settings.ini" gtk-theme-name "$gtk"
         set_ini "$cfg/gtk-4.0/settings.ini" gtk-theme-name "$gtk"
         install_user_stylesheet "$gtk" "$cfg/gtk-4.0"
@@ -218,7 +273,7 @@ apply() {
     fi
 
     if [[ -d $ICONS_DIR/$icons ]]; then
-        gsettings set "$SCHEMA" icon-theme "$icons"
+        set_gsettings_if_changed "$SCHEMA" icon-theme "$icons"
     else
         log "icon theme missing at $ICONS_DIR/$icons, leaving icons alone"
         icons=""
@@ -233,24 +288,32 @@ apply() {
     if [[ ! -d $THEMES_DIR/$shell ]]; then
         log "shell theme missing at $THEMES_DIR/$shell, leaving the shell alone"
     elif gsettings list-schemas 2>/dev/null | grep -qx "$SHELL_SCHEMA"; then
-        gsettings set "$SHELL_SCHEMA" name "$shell"
+        set_gsettings_if_changed "$SHELL_SCHEMA" name "$shell"
     else
         log "user-theme schema not available yet, shell theme will apply next login"
     fi
 
+    # The system-wide override, installed once at build time by
+    # apply-flatpak-theme-access.sh, already covers almost all of this: the
+    # xdg-config/gtk-3.0 and xdg-config/gtk-4.0 mounts, and XDG_DATA_DIRS with
+    # the host's /usr/share on it. Those are what GTK4 and libadwaita need,
+    # since they read gtk-theme-name from dconf rather than from GTK_THEME.
+    #
+    # So the only thing left for a per-user override is GTK_THEME, which is
+    # GTK3-only. Writing it costs a flatpak process and a config write, so it is
+    # skipped when the override already says what it should, which is the normal
+    # case on every login after the first.
+    #
+    # /usr/share/themes is deliberately not mounted. Flatpak reserves /usr, that
+    # mount is refused at every launch, and the theme never arrives.
     if [[ -n $gtk ]] && command -v flatpak >/dev/null 2>&1; then
-        # GTK_THEME only reaches GTK3. GTK4 and libadwaita read gtk-theme-name
-        # from dconf and look for the theme on XDG_DATA_DIRS, so the host's
-        # /usr/share is put there: the host /usr is always visible inside a
-        # sandbox as /run/host/usr, it just is not on the search path.
-        #
-        # /usr/share/themes is not used on purpose. Flatpak reserves /usr, so
-        # that mount is refused at every launch and the theme never arrives.
-        flatpak override --user \
-            --filesystem=xdg-config/gtk-3.0:ro \
-            --filesystem=xdg-config/gtk-4.0:ro \
-            --env=GTK_THEME="$gtk" \
-            --env=XDG_DATA_DIRS="$XDG_DATA_DIRS_FLATPAK" >/dev/null 2>&1 || true
+        if [[ $(flatpak override --user --show 2>/dev/null || true) != *"GTK_THEME=$gtk"* ]]; then
+            flatpak override --user \
+                --filesystem=xdg-config/gtk-3.0:ro \
+                --filesystem=xdg-config/gtk-4.0:ro \
+                --env=GTK_THEME="$gtk" \
+                --env=XDG_DATA_DIRS="$XDG_DATA_DIRS_FLATPAK" >/dev/null 2>&1 || true
+        fi
     fi
 
     log "applied gtk=${gtk:-none} icons=${icons:-none} shell=$shell"

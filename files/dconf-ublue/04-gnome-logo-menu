@@ -1,4 +1,21 @@
 [org/gnome/shell/extensions/Logo-menu]
+# The FloatOS mark instead of the Universal Blue one.
+#
+# The extension picks its icon like this, in setIconImage() in extension.js:
+# use-custom-icon and a non-empty custom-icon-path win outright, and only if that
+# is off does it fall back to the per-distro list in constants.js, which is where
+# the Universal Blue logo comes from. So pointing it at our own file is enough, and
+# nothing in the extension has to be patched.
+#
+# The file has to end in -symbolic.svg. The GNOME Shell decides an icon is
+# symbolic from that suffix alone, in icon_uri_is_symbolic() in st-icon-theme.c, and
+# a file that is not recognised as symbolic renders as a fixed image that ignores
+# the panel colour.
+#
+# Both come from the same key, so symbolic-icon below is only what the extension
+# falls back to if someone turns use-custom-icon off.
+use-custom-icon=true
+custom-icon-path='/usr/share/floatblue/branding/floatos-logo-symbolic.svg'
 symbolic-icon=true
 menu-button-icon-size=20
 menu-button-terminal='/usr/bin/ptyxis --new-window'
