@@ -66,6 +66,10 @@ find_user_theme_uuid() {
 
 USER_THEME_UUID=$(find_user_theme_uuid || true)
 
+# Flatpak's own default inside a sandbox, plus the host's /usr/share. Without
+# the last entry a libadwaita app finds only the runtime's Default and Emacs.
+XDG_DATA_DIRS_FLATPAK=/app/share:/usr/share:/usr/share/runtime/share:/run/host/user-share:/run/host/share:/run/host/usr/share
+
 log() { printf 'float-theme-sync: %s\n' "$*" >&2; }
 
 # gsettings needs the session bus; without it (ssh, early boot, the Anaconda
@@ -235,9 +239,18 @@ apply() {
     fi
 
     if [[ -n $gtk ]] && command -v flatpak >/dev/null 2>&1; then
-        flatpak override --user --filesystem=/usr/share/themes:ro \
-            --filesystem=/usr/share/icons:ro \
-            --env=GTK_THEME="$gtk" >/dev/null 2>&1 || true
+        # GTK_THEME only reaches GTK3. GTK4 and libadwaita read gtk-theme-name
+        # from dconf and look for the theme on XDG_DATA_DIRS, so the host's
+        # /usr/share is put there: the host /usr is always visible inside a
+        # sandbox as /run/host/usr, it just is not on the search path.
+        #
+        # /usr/share/themes is not used on purpose. Flatpak reserves /usr, so
+        # that mount is refused at every launch and the theme never arrives.
+        flatpak override --user \
+            --filesystem=xdg-config/gtk-3.0:ro \
+            --filesystem=xdg-config/gtk-4.0:ro \
+            --env=GTK_THEME="$gtk" \
+            --env=XDG_DATA_DIRS="$XDG_DATA_DIRS_FLATPAK" >/dev/null 2>&1 || true
     fi
 
     log "applied gtk=${gtk:-none} icons=${icons:-none} shell=$shell"
