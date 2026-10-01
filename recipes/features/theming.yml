@@ -16,10 +16,19 @@ modules:
     include:
       - zz500-float-theme.gschema.override
 
+  # Installed here rather than left to the ublue overrides block further down,
+  # because apply-desktop-dconf.sh has to run "dconf update" after this file
+  # exists, and that block comes later in the build order.
+  - type: files
+    files:
+      - source: dconf-ublue/10-float-desktop
+        destination: /etc/dconf/db/distro.d
+
   - type: script
     scripts:
       - install-flat-remix-themes.sh
       - seed-user-theme.sh
+      - apply-desktop-dconf.sh
       - apply-flatpak-theme-access.sh
 
   - type: systemd

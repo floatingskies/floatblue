@@ -1,0 +1,5 @@
+[org/gnome/shell]
+disabled-extensions=['blur-my-shell@aunetx']
+
+[org/gnome/shell/extensions/user-theme]
+name='Flat-Remix-Dark'

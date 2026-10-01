@@ -65,8 +65,16 @@ This is the part worth reading if you are copying any of this.
 * **I did not swap the resolver.** Running a local validating DNS server is a
   real hardening win and also a classic way to end up with podman that cannot
   resolve anything
-* **One GNOME extension, not zero.** User Themes, because a shell theme does
-  nothing without it. No dock, no accent icons, nothing that touches the layout
+* **The dock stays, the blur does not.** Dash to Dock and AppIndicator come from
+  the Bluefin base and I kept them, they are how you actually use the machine.
+  Blur My Shell is disabled through the system dconf database, because a shell
+  theme over a blurred panel just looks broken. Only User Themes is added on
+  top, since a shell theme does nothing without it
+* **One more script, `apply-desktop-dconf.sh`.** Dropping a file into
+  `/etc/dconf/db/distro.d` does nothing on its own, the profile under
+  `/etc/dconf/profile/user` is only written by an explicit `dconf update`. That
+  script runs the update and reads the result back, so a profile that compiled
+  but did not take effect fails the build instead of silently doing nothing
 
 ## doas and the BSD/Unix tools
 

@@ -50,11 +50,28 @@ install_dir() {
     echo "  installed $dest"
 }
 
+# libadwaita is the GTK4 half of the theme: it is what Adwaita based apps end
+# up reading, so its stylesheet is also the one a GTK4 app should find. GTK4
+# looks under a gtk-4.0 directory though, so mirror libadwaita/ into
+# libadwaita/gtk-4.0/ instead of leaving the two to drift. The assets are
+# copied as well, the titlebutton css references them by relative path and the
+# window controls end up unstyled if they go missing.
+mirror_libadwaita_to_gtk4() {
+    local theme=$1 entry
+    mkdir -p "$theme/libadwaita/gtk-4.0"
+    for entry in "$theme/libadwaita"/*; do
+        [[ -e $entry ]] || continue
+        [[ $(basename "$entry") == gtk-4.0 ]] && continue
+        cp -a "$entry" "$theme/libadwaita/gtk-4.0/"
+    done
+}
+
 echo "Flat Remix GTK (Blue):"
 gtk_tar=$(fetch flat-remix-gtk "$GTK_REF")
 for variant in Light Dark; do
     install_dir "$gtk_tar" "themes/Flat-Remix-GTK-Blue-$variant" \
         "$THEMES_DIR/Flat-Remix-GTK-Blue-$variant"
+    mirror_libadwaita_to_gtk4 "$THEMES_DIR/Flat-Remix-GTK-Blue-$variant"
 done
 
 echo "Flat Remix icons (Blue):"
@@ -71,9 +88,17 @@ for variant in Light Dark Light-fullPanel Dark-fullPanel; do
         "$THEMES_DIR/Flat-Remix-$variant"
 done
 
+# Check the stylesheets themselves, not just the directories. Each variant is
+# self contained: the Dark one carries a dark libadwaita/gtk.css and a dark
+# gtk-4.0/gtk.css, so swapping the theme name is all it takes to move GTK3,
+# GTK4 and libadwaita together. That only holds while the files are really
+# there, and a bare "gtk-4.0" directory that happens to be empty would ship a
+# system where every GTK4 app silently renders as Adwaita.
 for t in "$THEMES_DIR"/Flat-Remix-GTK-Blue-Light "$THEMES_DIR"/Flat-Remix-GTK-Blue-Dark; do
-    for d in gtk-3.0 gtk-4.0 libadwaita; do
-        [[ -d "$t/$d" ]] || { echo "error: missing $t/$d" >&2; exit 1; }
+    for f in gtk-3.0/gtk.css gtk-3.0/gtk-dark.css \
+             gtk-4.0/gtk.css gtk-4.0/gtk-dark.css \
+             libadwaita/gtk.css libadwaita/gtk-4.0/gtk.css; do
+        [[ -s "$t/$f" ]] || { echo "error: missing or empty $t/$f" >&2; exit 1; }
     done
 done
 for t in "$ICONS_DIR"/Flat-Remix-Blue-Light "$ICONS_DIR"/Flat-Remix-Blue-Dark; do
