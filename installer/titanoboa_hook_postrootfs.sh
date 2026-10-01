@@ -228,10 +228,71 @@ fi
 
 rm -f /usr/bin/rpm-ostree # Should never under any circumstance be ran on the live ISO
 
-# Recompile schemas so the live session picks up dconf/gschema overrides
+# The theme has to survive into the live session.
+#
+# The ISO payload is the container image, so everything under /usr comes along
+# already and most of this is belt and braces. What is not automatic is the
+# compilation of the two databases the desktop reads:
+#
+#   glib-compile-schemas  covers org.gnome.desktop.background, which is where
+#                         the wallpaper override lands, including the light and
+#                         dark pair chosen at image build time
+#   dconf update          covers /etc/dconf/db/*.d, which is where the greeter
+#                         theme, the disabled Blur My Shell, the User Themes
+#                         extension entry and animations-off live
+#
+# The comment above only ever ran the glib one. The dconf half happens to also
+# happen at boot through float-dconf-update.service, but relying on a service for
+# something this hook can do deterministically is how a live ISO ends up booting
+# unthemed with nothing in the log to explain it.
 if [[ $desktop_env == gnome ]]; then
     glib-compile-schemas /usr/share/glib-2.0/schemas
+
+    if command -v dconf >/dev/null 2>&1; then
+        dconf update
+        echo "  dconf database compiled for the live session"
+    else
+        echo "  dconf not present, the greeter theme will fall back" >&2
+    fi
 fi
+
+# Check the theme actually made it into the payload, rather than finding out from
+# a screenshot someone posts later. Anything missing here means the image and the
+# ISO have diverged, and an unthemed ISO is not worth shipping.
+missing=()
+for t in Flat-Remix-GTK-Blue-Light Flat-Remix-GTK-Blue-Dark; do
+    [[ -f /usr/share/themes/$t/gtk-4.0/gtk.css ]] || missing+=("$t/gtk-4.0/gtk.css")
+    [[ -f /usr/share/themes/$t/libadwaita/gtk.css ]] || missing+=("$t/libadwaita/gtk.css")
+done
+for t in Flat-Remix-Light Flat-Remix-Dark; do
+    [[ -f /usr/share/themes/$t/gnome-shell/gnome-shell.css ]] || missing+=("$t/gnome-shell/gnome-shell.css")
+done
+for i in Flat-Remix-Blue-Light Flat-Remix-Blue-Dark; do
+    [[ -f /usr/share/icons/$i/index.theme ]] || missing+=("icons/$i/index.theme")
+done
+[[ -d /usr/share/gnome-shell/extensions/user-theme@gnome-shell-extensions.gcampax.github.com ]] \
+    || missing+=("the User Themes extension")
+for p in fedora_logo_med.png fedora_whitelogo_med.png; do
+    [[ -f /usr/share/pixmaps/$p ]] || missing+=("pixmaps/$p")
+done
+[[ -f /usr/share/glib-2.0/schemas/zz99-float-wallpaper.gschema.override ]] \
+    || missing+=("the wallpaper override")
+[[ -d /usr/share/backgrounds/Floatblue ]] || missing+=("the Floatblue wallpapers")
+
+if ((${#missing[@]})); then
+    echo "error: the live ISO is missing theme files: ${missing[*]}" >&2
+    exit 1
+fi
+echo "  theme files verified in the ISO payload"
+
+# The per-user half runs from the session, not from here. float-theme-sync is a
+# user unit enabled system-wide, so the live session gets it the same way any
+# account does, and liveuser gets /etc/skel on first boot.
+if [[ ! -e /etc/systemd/user/default.target.wants/float-theme-sync.service ]]; then
+    echo "error: float-theme-sync.service is not enabled globally, the live session will not be themed" >&2
+    exit 1
+fi
+echo "  float-theme-sync is enabled globally, the live session will pick it up"
 
 # Install Gparted
 dnf -yq install gparted

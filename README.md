@@ -338,6 +338,17 @@ Like [Bluefin](https://projectbluefin.io) live desktop ISOs are made using [Tita
 
 Boot the ISO. You have the full desktop running live from the image. To install the image to disk start **"Install, to Disk"** from the desktop (Anaconda). The installer also offers to enroll the Universal Blue boot key (password: `universalblue`) so it can boot with Secure Boot; it also works without Secure Boot or you can enroll your own keys later.
 
+### The theme comes along with it
+
+The ISO payload is the container image, so everything under `/usr` is already there: the Flat Remix GTK, libadwaita, shell and icon themes, the wallpaper collections, the pixmaps and the User Themes extension. Nothing is copied in separately for the ISO.
+
+Two things are not automatic, and the post-rootfs hook now handles both:
+
+- `glib-compile-schemas`, which is where `org.gnome.desktop.background` lives, so the wallpaper override and its light and dark pair are picked up.
+- `dconf update`, which compiles `/etc/dconf/db/*.d`. That is where the greeter theme, the disabled Blur My Shell, the User Themes entry and animations-off live. The hook previously only ran the glib half, so the dconf half depended entirely on `float-dconf-update.service` at boot. It worked, but relying on a service for something the hook can do deterministically is how a live ISO ends up booting unthemed with nothing in the log to explain it.
+
+The hook then checks the theme actually made it into the payload: the GTK 4.0 and libadwaita sheets, both shell themes, both icon themes, the extension, both branding pixmaps, the wallpaper override and the Floatblue collection. It also checks that `float-theme-sync.service` is enabled globally, since that is what themes the live session. Any of those missing fails the ISO build rather than producing an unthemed ISO that only gets noticed from a screenshot later.
+
 ## Verification
 
 These images are signed with [Sigstore](https://www.sigstore.dev/)s [cosign](https://github.com/sigstore/cosign). You can check the signature by downloading the `cosign.pub` file from this repo and running the following command:
