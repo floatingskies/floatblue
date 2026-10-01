@@ -1,0 +1,14 @@
+[Unit]
+Description=Compile the dconf system database before the greeter reads it
+Documentation=man:dconf(1)
+After=local-fs.target
+Before=display-manager.service
+ConditionPathExists=/etc/dconf/db/distro.d
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dconf update
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

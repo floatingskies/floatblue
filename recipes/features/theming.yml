@@ -32,6 +32,13 @@ modules:
       - apply-flatpak-theme-access.sh
 
   - type: systemd
+    system:
+      enabled:
+        # dconf update compiles distro.d into a binary database, so a keyfile
+        # dropped in after it ran is simply ignored. Running it again at boot
+        # means whatever is on disk when the greeter starts is what the greeter
+        # gets, no matter which recipe added it or in what order.
+        - float-dconf-update.service
     user:
       enabled:
         - float-theme-sync.service
