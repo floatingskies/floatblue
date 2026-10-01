@@ -20,10 +20,13 @@ modules:
         - scribus
         # 3D
         - blender
-        # Colour management. colord is the daemon, the icc profiles are what it
-        # actually needs to map anything, and without them it guesses.
+        # Colour management. colord is the daemon and it ships its own ICC
+        # profiles: AdobeRGB1998, ProPhotoRGB and Rec709 all land in
+        # /usr/share/color/icc/colord from this one package. There is no
+        # colord-icc-profiles-free, that name was wrong, and a package that does
+        # not exist is not something to leave in a recipe.
         - colord
-        - colord-icc-profiles-free
+        - colord-libs
         # Batch and metadata
         - ImageMagick
         - GraphicsMagick

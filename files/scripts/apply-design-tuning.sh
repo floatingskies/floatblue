@@ -14,8 +14,16 @@ set -eou pipefail
 FONTCONF_DROPIN=/etc/fontconfig/conf.d/62-float-design.conf
 
 fail=0
+soft=0
+
+# ok   something this image ships, failing it means we shipped it wrong
+# bad  ditto, and it fails the build
+# note something that comes from a package this recipe installs optionally.
+#      Reported, never fatal: a check that is hard while the thing it checks is
+#      optional means one renamed package takes the whole image build down.
 ok()  { printf '  %-36s %s\n' "$1" "$2"; }
 bad() { printf '  %-36s %s\n' "$1" "$2" >&2; fail=1; }
+note() { printf '  %-36s %s\n' "$1" "$2"; soft=$((soft + 1)); }
 
 echo "Font rendering:"
 if [[ ! -f $FONTCONF_DROPIN ]]; then
@@ -38,26 +46,40 @@ else
     ok "bitmap rejection" "bitmaps only, hinted fonts untouched"
 fi
 
+# fontconfig itself comes from the base image rather than from this recipe, so a
+# missing binary is worth saying out loud but is not our drop-in being wrong.
 if command -v fc-match >/dev/null 2>&1; then
-    ok "fc-match sans" "$(fc-match sans 2>/dev/null | sed 's/:.*//' | sed 's|.*/||')"
-    ok "fc-match mono" "$(fc-match monospace 2>/dev/null | sed 's/:.*//' | sed 's|.*/||')"
+    note "fc-match sans" "$(fc-match sans 2>/dev/null | sed 's/:.*//;s|.*/||')"
+    note "fc-match mono" "$(fc-match monospace 2>/dev/null | sed 's/:.*//;s|.*/||')"
 else
-    bad "fontconfig" "fc-match missing"
+    note "fc-match" "not installed, nothing to resolve against"
 fi
 
 echo "Colour management:"
+# Reported, not failed. These come from packages installed with
+# skip-unavailable, and making a check that hard while the thing it checks is
+# optional means one renamed package fails the whole image build. That is the
+# same mistake as demanding a unit the base image does not ship.
+#
+# colord ships its own profiles, AdobeRGB1998, ProPhotoRGB and Rec709, so
+# /usr/share/color/icc being populated and colord being installed go together and
+# neither is a sign that anything we shipped is wrong.
 if [[ -d /usr/share/color/icc ]]; then
     profiles=$(find /usr/share/color/icc -name '*.icc' -o -name '*.icm' 2>/dev/null | wc -l)
     if ((profiles > 0)); then
-        ok "ICC profiles" "$profiles available"
+        note "ICC profiles" "$profiles available"
     else
-        bad "ICC profiles" "none installed, colord has nothing to map against"
+        note "ICC profiles" "none installed, colord will fall back to sRGB"
     fi
 else
-    bad "ICC profiles" "/usr/share/color/icc missing"
+    note "ICC profiles" "/usr/share/color/icc missing, colour management is inert"
 fi
-command -v colord >/dev/null 2>&1 && ok "colord" "$(command -v colord)" \
-    || bad "colord" "not installed"
+
+if command -v colord >/dev/null 2>&1; then
+    note "colord" "$(command -v colord)"
+else
+    note "colord" "not installed, applications fall back to sRGB"
+fi
 
 echo "Editors, present or not:"
 for tool in gimp inkscape krita darktable blender scribus; do
@@ -72,7 +94,9 @@ done
 
 if ((fail)); then
     echo "error: the creative profile is not correctly configured" >&2
+    echo "       only the checks above marked as errors are ours; the ones marked" >&2
+    echo "       as notes come from packages that are optional on purpose" >&2
     exit 1
 fi
 
-echo "Creative profile configured"
+echo "Creative profile configured, $soft optional item(s) reported"
